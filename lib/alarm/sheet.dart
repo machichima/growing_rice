@@ -6,6 +6,7 @@ import 'alarm_helper.dart';
 import 'package:flutter/material.dart';
 import 'alarm_look.dart';
 import 'sheet2.dart';
+import 'sheet3.dart';
 import 'timepicker.dart';
 
 
@@ -25,7 +26,8 @@ class _sheetState extends State<sheet> {
   List<String> days=['一','二','三','四','五','六','日'];
   List<bool>   opendays=[true,true,true,true,true,true,true,];
   List<bool>  setdays=[false,false,false,false,false,false,false,];
-  String sound='assets/alarm.mp3';
+  List<bool> alarmbool=[false,false,false];
+  String sound='alarm1';
   bool enable_task=true;
   bool enable=true;
   DateTime initialtime=DateTime.now();
@@ -76,81 +78,59 @@ class _sheetState extends State<sheet> {
               return StatefulBuilder(
                   builder: (context,setModalState){
                     return Container(
-                      height: height/2.1,
-                      color: backgroundcolor,
-                      child: Center(
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          mainAxisSize: MainAxisSize.min,
-                          children: <Widget>[
-                            alarmtimepicker(onsonchanged: (DateTime newtime){
-                              updatetime(newtime);
-                            },dateTime: selectedTime,)
-                            ,
-                            Container(
-                              padding: EdgeInsets.fromLTRB(0, height/20, 0, 0),
-                              child: Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                                children: [
-                                    InkWell(
-                                      child: Container( height:width/6,width: width/6 ,child: enable ? Image(image: AssetImage('assets/task.png'), fit: BoxFit.fill,): Image(image: AssetImage('assets/task無底色.png'), fit: BoxFit.fill,),),
-                                      onTap: (){
-                                      setModalState(() {
-                                      enable=!enable;
-                                      });}
-                                    ),
-                                  Container(
-                                    child:
-                                    sheet2(days: days,opendays: setdays,),
-                                  ),
-                                  Container(
-                                    child:
-                                    Container(
-                                      height: width/6,
-                                      width: width/6,
-                                      child: InkWell(
-                                        onTap: () async {
-                                          FilePickerResult result = await FilePicker.platform.pickFiles(
-                                            type: FileType.audio
-                                          );
-                                          if(result != null) {
-                                            File file2 = File(result.files.single.path);
-                                            sound = file2.toString();
-                                            print(sound);
-                                          } else {
-                                            // User canceled the picker
-                                            sound = 'assets/alarm.mp3';
-                                          }
-
-                                        },
-                                        child: Image(
-                                          image: AssetImage('assets/檔案_001.png'),
-                                          fit: BoxFit.fill,
-                                        ),
+                        height: height/2.1,
+                        color: backgroundcolor,
+                        child: Center(
+                          child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              mainAxisSize: MainAxisSize.min,
+                              children: <Widget>[
+                                alarmtimepicker(onsonchanged: (DateTime newtime){
+                                  updatetime(newtime);
+                                },dateTime: selectedTime,)
+                                ,
+                                Container(
+                                  padding: EdgeInsets.fromLTRB(0, height/20, 0, 0),
+                                  child: Row(
+                                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                                    children: [
+                                      InkWell(
+                                          child: Container( height:width/6,width: width/6 ,child: enable ? Image(image: AssetImage('assets/task.png'), fit: BoxFit.fill,): Image(image: AssetImage('assets/task無底色.png'), fit: BoxFit.fill,),),
+                                          onTap: (){
+                                            setModalState(() {
+                                              enable=!enable;
+                                            });}
                                       ),
-                                    ),
+                                      Container(
+                                        child:
+                                        sheet2(days: days,opendays: setdays,),
+                                      ),
+                                      Container(
+                                        child:
+                                        sheet3(sound: sound,alarmbool: alarmbool,),
+                                      ),
+                                    ],
                                   ),
-                                ],
-                              ),
-                            ),
-                              Padding(
-                                padding: EdgeInsets.fromLTRB(0, height/20, 0, 0),
-                                child: InkWell(
-                                child: Image(
-                                  image: AssetImage('assets/勾勾.png'),
-                                  fit: BoxFit.fill,
+                                ),
+                                Padding(
+                                  padding: EdgeInsets.fromLTRB(0, height/18, 0, 0),
+                                  child: InkWell(
+                                      child: Image(
+                                        image: AssetImage('assets/勾勾.png'),
+                                        fit: BoxFit.fill,
+                                      ),
+                                      onTap: () {
+                                        print(selectedTime);
+                                        print(sound);
+                                        var tempalarm=Alarm_look(alarm_time: selectedTime,enable_task: enable,sound: sound,isactive: true,Sunday: setdays[6],Monday: setdays[0],Tuesday: setdays[1],Wednesday: setdays[2],Thursday: setdays[3],Friday: setdays[4],Saturday: setdays[5]);
+                                        widget.alarmHelper.insertAlarm(tempalarm);
+                                        widget.loadAlarm();
+                                        Navigator.pop(context);
+                                      }
                                   ),
-                                  onTap: () {
-                                  print(selectedTime);
-                                  var tempalarm=Alarm_look(alarm_time: selectedTime,enable_task: enable,sound: sound,isactive: true,Sunday: setdays[6],Monday: setdays[0],Tuesday: setdays[1],Wednesday: setdays[2],Thursday: setdays[3],Friday: setdays[4],Saturday: setdays[5]);
-                                  widget.alarmHelper.insertAlarm(tempalarm);
-                                  widget.loadAlarm();
-                                  Navigator.pop(context);
-                                }
-                        ),
-                              ),]
-                      ),
-                    ));
+                                ),]
+                          ),
+                        ));
                   }
               );
             },

@@ -35,7 +35,7 @@ class _MyAlarmState extends State<MyAlarm> {
 
   @override
 
-  ///從這行
+  /**從這行
   onNotificationInLowerVersions(ReceivedNotification receivedNotification) {
     print('Notification Received ${receivedNotification.id}');
   }
@@ -49,12 +49,15 @@ class _MyAlarmState extends State<MyAlarm> {
     }));
   }
 
-  ///到這行，為設定鬧種嚮的頁面;
+  **/
+
+  //到這行，為設定鬧種嚮的頁面;
   void initState() {
+    /**
     notificationPlugin
         .setListenerForLowerVersions(onNotificationInLowerVersions);
     notificationPlugin.setOnNotificationClick(onNotificationClick);
-
+    **/
     _alarmHelper.initializeDatabase().then((value) {
       print('------database intialized');
       loadAlarms();
@@ -99,7 +102,7 @@ class _MyAlarmState extends State<MyAlarm> {
                       child: Container(
                         child: InkWell(
                           onTap: () {
-                            Navigator.pushNamed(context, '/');
+                            Navigator.pop(context);
                           },
                           child: Image(
                             image: AssetImage('assets/home.png'),

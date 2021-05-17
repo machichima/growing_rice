@@ -1,6 +1,9 @@
 import 'dart:math';
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:growingrice_withalarm/alarm/NotificationPlugin.dart';
+import 'package:growingrice_withalarm/alarm/alarm_main.dart';
+import 'package:growingrice_withalarm/alarm/notificationscreen.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_xlider/flutter_xlider.dart';
 import 'sky.dart';
@@ -53,7 +56,30 @@ class _MainPageState extends State<MainPage> {
     DateTime.now().add(Duration(days: 7)).month,
     DateTime.now().add(Duration(days: 7)).day
   ];
+
   var random = Random();
+  ///從這行
+  onNotificationInLowerVersions(ReceivedNotification receivedNotification) {
+    print('Notification Received ${receivedNotification.id}');
+  }
+
+  onNotificationClick(String payload) {
+    print('Payload $payload');
+    Navigator.push(context, MaterialPageRoute(builder: (coontext) {
+      return NotificationScreen(
+        payload: payload,
+      );
+    }));
+  }
+
+  ///到這行，為設定鬧種嚮的頁面;
+  void initState() {
+    notificationPlugin
+        .setListenerForLowerVersions(onNotificationInLowerVersions);
+    notificationPlugin.setOnNotificationClick(onNotificationClick);
+
+    super.initState();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -310,17 +336,15 @@ class _MainPageState extends State<MainPage> {
                               fit: BoxFit.fill,
                             ),
                             onPressed: () {
-                              // Navigator.of(context).push(
-                              //   PageRouteBuilder(
-                              //     //opaque: false, // set to false
-                              //     pageBuilder: (_, __, ___) => OutDoorTime(
-                              //       skyRoute: skyRoute,
-                              //     ),
-                              //   ),
-                              //   // context,
-                              //   // MaterialPageRoute(
-                              //   //     builder: (context) => OutDoorTime()),
-                              // );
+                              Navigator.of(context).push(
+                                //opaque: false, // set to false
+
+                                MaterialPageRoute(builder: (context) => MyAlarm()),
+
+                                // pageBuilder: (_, __, ___) => setting_page(
+                                //     skyRoute: skyRoute,
+                                //   ),
+                              );
                             },
                           ),
                         ),

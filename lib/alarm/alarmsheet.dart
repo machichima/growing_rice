@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'NotificationPlugin.dart';
 import 'alarm_look.dart';
 import 'sheet2.dart';
+import 'sheet3.dart';
 import 'timepicker.dart';
 
 void alarmsheet(context,Alarm_look alarm,loadAlarm){
@@ -12,22 +13,23 @@ void alarmsheet(context,Alarm_look alarm,loadAlarm){
   List<String> days=['一','二','三','四','五','六','日'];
   List<bool>   opendays=[false,false,false,false,false,false,false,];
   List<bool>  setdays=[false,false,false,false,false,false,false,];
+  List<bool> alarmbool=[false,false,false];
   String sound;
   bool enable;
   var Date;
   var currenttime=DateTime.now();
   var selectedTime;
 
-    selectedTime=alarm.alarm_time;
-    enable=alarm.enable_task;
-    sound=alarm.sound;
-    opendays[6]=alarm.Sunday;
-    opendays[0]=alarm.Monday;
-    opendays[1]=alarm.Tuesday;
-    opendays[2]=alarm.Wednesday;
-    opendays[3]=alarm.Thursday;
-    opendays[4]=alarm.Friday;
-    opendays[5]=alarm.Saturday;
+  selectedTime=alarm.alarm_time;
+  enable=alarm.enable_task;
+  sound=alarm.sound;
+  opendays[6]=alarm.Sunday;
+  opendays[0]=alarm.Monday;
+  opendays[1]=alarm.Tuesday;
+  opendays[2]=alarm.Wednesday;
+  opendays[3]=alarm.Thursday;
+  opendays[4]=alarm.Friday;
+  opendays[5]=alarm.Saturday;
 
   void settingdays() {
     for (int i = 0; i < 7; i++) {
@@ -93,27 +95,7 @@ void alarmsheet(context,Alarm_look alarm,loadAlarm){
                           ),
                           Container(
                             child:
-                            Container(
-                              height: width/6,
-                              width: width/6,
-                              child: InkWell(
-                                onTap: () async {
-                                  FilePickerResult result = await FilePicker.platform.pickFiles(
-                                      type: FileType.audio
-                                  );
-                                  if(result != null) {
-                                    File file2 = File(result.files.single.path);
-                                    sound = file2.toString();
-                                    print(sound);
-                                  } else {
-                                    // User canceled the picker
-                                  }},
-                                child: Image(
-                                  image: AssetImage('assets/檔案_001.png'),
-                                  fit: BoxFit.fill,
-                                ),
-                              ),
-                            ),
+                            sheet3(sound: sound,alarmbool: alarmbool,),
                           ),
                         ],
                       ),
