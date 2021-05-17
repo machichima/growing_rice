@@ -10,12 +10,14 @@ class WeatherIcon extends StatelessWidget {
   var val_12;
   var sunRise;
   var sunFall;
+  var alarmpage=false;
   WeatherIcon({
     @required this.iconTypeName,
     @required this.iconType,
     @required this.val_12,
     @required this.sunRise,
     @required this.sunFall,
+    this.alarmpage=false,
   });
 
   @override
@@ -26,15 +28,15 @@ class WeatherIcon extends StatelessWidget {
     var perH = h / 640;
     return Row(
       //降雨機率
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      mainAxisAlignment: MainAxisAlignment.start,
       children: [
         Container(
           //width: 40,
           //height: 40,
           child: Image.asset(
             'assets/images/weatherIcon/$iconTypeName.png',
-            width: perW * 20,
-            height: perW * 30,
+            width: alarmpage?perW * 24: perW *20,
+            height: alarmpage?perW * 36: perW*30,
             fit: BoxFit.contain,
           ),
         ),
@@ -51,7 +53,7 @@ class WeatherIcon extends StatelessWidget {
                     ? Colors.black
                     : Colors.white,
                 fontWeight: FontWeight.bold,
-                fontSize: 15),
+                fontSize: alarmpage?18:15),
           ),
         ),
       ],
