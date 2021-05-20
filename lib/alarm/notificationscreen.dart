@@ -13,11 +13,18 @@ import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../sky.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../sun_moon.dart';
 import '../weatherDataBase.dart';
 import '../weatherIcon.dart';
 import 'alarm_main.dart';
 
+Future<List> getClockValuesSF() async {
+  SharedPreferences prefs = await SharedPreferences.getInstance();
+  //Return String
+  List value = [prefs.getInt('outTime'), prefs.getInt('backTime')];
+  return value;
+}
 
 class NotificationScreen extends StatefulWidget {
   final String payload;
@@ -27,27 +34,27 @@ class NotificationScreen extends StatefulWidget {
 }
 
 class _NotificationScreenState extends State<NotificationScreen> {
-
-
   Future<String> getWeatherInfoSF() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     //Return String
     String value = prefs.getString('weatherInfo');
     return value;
   }
+
   AudioPlayer audioPlayer = AudioPlayer();
 
   playLocal() async {
     int result = await audioPlayer.play(widget.payload, isLocal: true);
     print('start to play');
   }
-  var currenttime=DateTime.now();
+
+  var currenttime = DateTime.now();
   bool buttom1 = true;
   bool buttom2 = true;
   bool buttom3 = true;
   bool buttom4 = true;
   bool buttom5 = true;
-  int weather=2;
+  int weather = 1;
   bool changeCrop = false;
   int cropType = 1;
   List position;
@@ -83,6 +90,13 @@ class _NotificationScreenState extends State<NotificationScreen> {
 
   @override
   Widget build(BuildContext context) {
+    List outBackTime;
+    Future getOutTime() async {
+      //得到出門及回家時間
+      outBackTime = await getClockValuesSF();
+      return outBackTime;
+    }
+
     int moonRise = 15;
     int moonFall = 2;
     double w = MediaQuery.of(context).size.width;
@@ -136,7 +150,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
 
     Future<List> cropData() async {
       List<Map<String, dynamic>> cropdata =
-      await ConnectCropData.instance.queryAll();
+          await ConnectCropData.instance.queryAll();
       if (cropdata.isNotEmpty) {
         print(cropdata);
         var cropdata_1 = cropdata[0]['nextDate'];
@@ -167,9 +181,9 @@ class _NotificationScreenState extends State<NotificationScreen> {
         ConnectCropData.instance.update({
           ConnectCropData.cropId: 1,
           ConnectCropData.cropType:
-          c[0] == '0000-00-00' ? 1 : (c[1] == 13 ? 1 : c[1] + 1),
+              c[0] == '0000-00-00' ? 1 : (c[1] == 13 ? 1 : c[1] + 1),
           ConnectCropData.nextDate:
-          "${cropChangeDate[0]}-${cropChangeDate[1]}-${cropChangeDate[2]}"
+              "${cropChangeDate[0]}-${cropChangeDate[1]}-${cropChangeDate[2]}"
         });
         cropType = c[1] == 13 ? 1 : c[1] + 1;
       }
@@ -177,48 +191,64 @@ class _NotificationScreenState extends State<NotificationScreen> {
 
     getcropdata();
     getWeatherInfoSF();
+    getOutTime();
     weatherDataBase(timeNow, date, dateTomorrow);
 
     return FutureBuilder<List>(
-        future: Future.wait(
-            [ConnectWeatherData.instance.queryAll(), getWeatherInfoSF()]),
+        future: Future.wait([
+          ConnectWeatherData.instance.queryAll(),
+          getWeatherInfoSF(),
+          getOutTime()
+        ]),
         builder: (BuildContext context, AsyncSnapshot<List<dynamic>> snapshot) {
           print(snapshot.data);
           if (snapshot
               .hasData) //if (Provider.of<WeatherData>(context).getWeather) //
-              {
+          {
             print('////////////////////////////////////////////////////////');
             print(snapshot.data);
             int sunRise = // weatherdata != null
-            val >= 24
-                ? json.decode(snapshot.data[0][0]['sunRise'])[0]
-                : json.decode(snapshot.data[0][0]['sunRise'])[1]; //6;
+                val >= 24
+                    ? json.decode(snapshot.data[0][0]['sunRise'])[0]
+                    : json.decode(snapshot.data[0][0]['sunRise'])[1]; //6;
             int sunFall = val >= 24
                 ? json.decode(snapshot.data[0][0]['sunSet'])[0]
                 : json.decode(snapshot.data[0][0]['sunSet'])[1];
             String skyRoute = val_12 == sunRise + 1 || val_12 == sunFall - 1
                 ? 'assets/images/sky/day_sep.png'
                 : val_12 == sunRise || val_12 == sunFall
-                ? 'assets/images/sky/sun_rise_fall.png'
-                : val_12 == sunRise - 1 || val_12 == sunFall + 1
-                ? 'assets/images/sky/night_sep.png'
-                : val_12 > sunFall + 1 || val_12 < sunRise - 1
-                ? 'assets/images/sky/night.png'
-                : 'assets/images/sky/day.png';
+                    ? 'assets/images/sky/sun_rise_fall.png'
+                    : val_12 == sunRise - 1 || val_12 == sunFall + 1
+                        ? 'assets/images/sky/night_sep.png'
+                        : val_12 > sunFall + 1 || val_12 < sunRise - 1
+                            ? 'assets/images/sky/night.png'
+                            : 'assets/images/sky/day.png';
             List cloudCoverData =
-            json.decode(snapshot.data[0][0]['cloudCover']);
+                json.decode(snapshot.data[0][0]['cloudCover']);
             double cloudCover = cloudCoverData[(val - timeNow).toInt()] ?? 0;
             List tempData = json.decode(snapshot.data[0][0]['temp']);
             double temp = tempData[(val - timeNow).toInt()] ?? 0;
             List feelTempData = json.decode(snapshot.data[0][0]['feelTemp']);
             double feelTemp = feelTempData[(val - timeNow).toInt()] ?? 0;
             List precipprobData =
-            json.decode(snapshot.data[0][0]['precipprob']);
+                json.decode(snapshot.data[0][0]['precipprob']);
             double precipprob = precipprobData[(val - timeNow).toInt()] ?? 0;
             List windSpeedData = json.decode(snapshot.data[0][0]['windSpeed']);
             double windSpeed = windSpeedData[(val - timeNow).toInt()] ?? 0;
             List humidityData = json.decode(snapshot.data[0][0]['windSpeed']);
             double humidity = humidityData[(val - timeNow).toInt()] ?? 0;
+
+            for (int i = timeNow.toInt(); i < snapshot.data[2][1]; i++) {
+              //確認在當下時間到回家時間的期間會不會下雨
+              if (precipprobData[i] > 30) {
+                weather = 2;
+                break;
+              }
+              if (cloudCoverData[i] > 50) {
+                //確認在當下時間到回家時間的期間是不是陰天
+                weather = 3;
+              }
+            }
 
             Map info = json.decode(snapshot.data[1] ??
                 json.encode({
@@ -240,7 +270,16 @@ class _NotificationScreenState extends State<NotificationScreen> {
                     sunFall: sunFall,
                     route: skyRoute,
                   ),
-
+                  (weather == 2) //raining
+                      ? Container(
+                          child: Image.asset(
+                            'assets/images/cloud/raining.gif',
+                            fit: BoxFit.fill,
+                          ),
+                          width: MediaQuery.of(context).size.width,
+                          height: MediaQuery.of(context).size.height,
+                        )
+                      : Container(),
                   SunMoon(
                     //sun
                     val: val,
@@ -249,8 +288,8 @@ class _NotificationScreenState extends State<NotificationScreen> {
                     route: val_12 <= sunRise + 2
                         ? 'assets/images/sun/sun_morning.png'
                         : val_12 >= sunFall - 2
-                        ? 'assets/images/sun/sun_afternoon.png'
-                        : 'assets/images/sun/sun_noon.png',
+                            ? 'assets/images/sun/sun_afternoon.png'
+                            : 'assets/images/sun/sun_noon.png',
                     isMoon: false,
                   ),
                   SunMoon(
@@ -263,25 +302,20 @@ class _NotificationScreenState extends State<NotificationScreen> {
                     isMoon: true,
                   ),
                   Positioned(
-                    //cloud
-                    height: h,
-                    left: cloudType == 0 ? -cloudVal.toDouble() : null,
-                    right: cloudType == 1 ? -cloudVal.toDouble() : null,
-                    child: val_12 <= sunFall && val_12 >= sunRise
-                        ? cloudCover != null
-                        ? cloudCover >= 50
-                        ? Image.asset(
-                        'assets/images/cloud/day_cloudy.png')
-                        : Image.asset('assets/images/cloud/day_cloud.png')
-                        : Image.asset('assets/images/cloud/day_cloud.png')
-                        : cloudCover != null
-                        ? cloudCover >= 50
-                        ? Image.asset(
-                        'assets/images/cloud/night_cloudy.png')
-                        : Image.asset(
-                        'assets/images/cloud/night_cloud.png')
-                        : Image.asset('assets/images/cloud/night_cloud.png'),
-                  ),
+                      //cloud
+                      height: h,
+                      left: cloudType == 0 ? -cloudVal.toDouble() : null,
+                      right: cloudType == 1 ? -cloudVal.toDouble() : null,
+                      child: val_12 <= sunFall && val_12 >= sunRise
+                          ? weather == 3
+                              ? Image.asset(
+                                  'assets/images/cloud/day_cloudy.png')
+                              : Image.asset('assets/images/cloud/day_cloud.png')
+                          : weather == 3
+                              ? Image.asset(
+                                  'assets/images/cloud/night_cloudy.png')
+                              : Image.asset(
+                                  'assets/images/cloud/night_cloud.png')),
                   Positioned(
                     left: 15,
                     top: MediaQuery.of(context).padding.top + 0.01 * h,
@@ -292,44 +326,49 @@ class _NotificationScreenState extends State<NotificationScreen> {
                         children: [
                           if (info['temp'])
                             WeatherIcon(
-                                iconTypeName: 'temp',
-                                iconType: temp,
-                                val_12: val_12,
-                                sunRise: sunRise,
-                                sunFall: sunFall,
-                                alarmpage: true,),
+                              iconTypeName: 'temp',
+                              iconType: temp,
+                              val_12: val_12,
+                              sunRise: sunRise,
+                              sunFall: sunFall,
+                              alarmpage: true,
+                            ),
                           if (info['feelTemp'])
                             WeatherIcon(
-                                iconTypeName: 'feelTemp',
-                                iconType: feelTemp,
-                                val_12: val_12,
-                                sunRise: sunRise,
-                                sunFall: sunFall,
-                                alarmpage: true,),
+                              iconTypeName: 'feelTemp',
+                              iconType: feelTemp,
+                              val_12: val_12,
+                              sunRise: sunRise,
+                              sunFall: sunFall,
+                              alarmpage: true,
+                            ),
                           if (info['rain'])
                             WeatherIcon(
-                                iconTypeName: 'precipprob',
-                                iconType: precipprob,
-                                val_12: val_12,
-                                sunRise: sunRise,
-                                sunFall: sunFall,
-                                alarmpage: true,),
+                              iconTypeName: 'precipprob',
+                              iconType: precipprob,
+                              val_12: val_12,
+                              sunRise: sunRise,
+                              sunFall: sunFall,
+                              alarmpage: true,
+                            ),
                           if (info['windSpeed'])
                             WeatherIcon(
-                                iconTypeName: 'windSpeed',
-                                iconType: windSpeed,
-                                val_12: val_12,
-                                sunRise: sunRise,
-                                sunFall: sunFall,
-                                alarmpage: true,),
+                              iconTypeName: 'windSpeed',
+                              iconType: windSpeed,
+                              val_12: val_12,
+                              sunRise: sunRise,
+                              sunFall: sunFall,
+                              alarmpage: true,
+                            ),
                           if (info['humidity'])
                             WeatherIcon(
-                                iconTypeName: 'humidity',
-                                iconType: humidity,
-                                val_12: val_12,
-                                sunRise: sunRise,
-                                sunFall: sunFall,
-                                alarmpage: true,),
+                              iconTypeName: 'humidity',
+                              iconType: humidity,
+                              val_12: val_12,
+                              sunRise: sunRise,
+                              sunFall: sunFall,
+                              alarmpage: true,
+                            ),
                         ],
                       ),
                     ),
@@ -417,12 +456,13 @@ class _NotificationScreenState extends State<NotificationScreen> {
                         val_12 == sunRise + 1 || val_12 == sunFall - 1
                             ? 'assets/images/soil/day_sep_soil.png'
                             : val_12 == sunRise || val_12 == sunFall
-                            ? 'assets/images/soil/sun_rise_fall_soil.png'
-                            : val_12 == sunRise - 1 || val_12 == sunFall + 1
-                            ? 'assets/images/soil/night_sep_soil.png'
-                            : val_12 > sunFall + 1 || val_12 < sunRise - 1
-                            ? 'assets/images/soil/night_soil.png'
-                            : 'assets/images/soil/day_soil.png',
+                                ? 'assets/images/soil/sun_rise_fall_soil.png'
+                                : val_12 == sunRise - 1 || val_12 == sunFall + 1
+                                    ? 'assets/images/soil/night_sep_soil.png'
+                                    : val_12 > sunFall + 1 ||
+                                            val_12 < sunRise - 1
+                                        ? 'assets/images/soil/night_soil.png'
+                                        : 'assets/images/soil/day_soil.png',
                         fit: BoxFit.fitWidth,
                       ),
                     ),
@@ -432,374 +472,496 @@ class _NotificationScreenState extends State<NotificationScreen> {
                     child: Image.asset('assets/images/crop/crop_$cropType.png'),
                   ),
                   Positioned(
-                    top: h/3.37,
-                    left: w/6,
+                    top: h / 3.37,
+                    left: w / 6,
                     child: Card(
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-                      color: Color.fromRGBO(221,194,159,1),
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(20)),
+                      color: Color.fromRGBO(221, 194, 159, 1),
                       child: Container(
-                        height: h/6.4,
-                        width: w/3*2,
+                        height: h / 6.4,
+                        width: w / 3 * 2,
                         alignment: Alignment.center,
                         child: Text(
-                            '${currenttime.hour} : ${currenttime.minute}',style: TextStyle(color: Colors.white,fontSize: 40)
-                        ),
+                            '${currenttime.hour} : ${currenttime.minute}',
+                            style:
+                                TextStyle(color: Colors.white, fontSize: 40)),
                       ),
                     ),
                   ),
-                  if(weather ==2 )
-                  Positioned(
-                    left: w/18,
-                    bottom: h/10,
-                    child: InkWell(
-                        onTap: (){
-                          setState(() {
-                            buttom1=false;
-                            print('ontap');
-                            if (buttom1|buttom2|buttom3|buttom4|buttom5 == false){
-                              Navigator.pop(context);
-                              print('pop');
-                            }
-                          });
-                        },
-                        child:
-                        buttom1 ? Container(
-                            height: h/9,
-                            width: h/9,
-                            child: Image(image: AssetImage('assets/images/alarm/snail3.png'),fit: BoxFit.fill,)
-                        ):Container()
+                  if (weather == 2)
+                    Positioned(
+                      left: w / 18,
+                      bottom: h / 10,
+                      child: InkWell(
+                          onTap: () {
+                            setState(() {
+                              buttom1 = false;
+                              print('ontap');
+                              if (buttom1 |
+                                      buttom2 |
+                                      buttom3 |
+                                      buttom4 |
+                                      buttom5 ==
+                                  false) {
+                                Navigator.pop(context);
+                                print('pop');
+                              }
+                            });
+                          },
+                          child: buttom1
+                              ? Container(
+                                  height: h / 9,
+                                  width: h / 9,
+                                  child: Image(
+                                    image: AssetImage(
+                                        'assets/images/alarm/snail3.png'),
+                                    fit: BoxFit.fill,
+                                  ))
+                              : Container()),
                     ),
-                  ),
-                  if(weather ==2 )
-                  Positioned(
-                    right: w/5.625,
-                    bottom: h/10,
-                    child: InkWell(
-                        onTap: (){
-                          setState(() {
-                            buttom2=false;
-                            print('ontap');
-                            print(buttom2);
-                            if (buttom1|buttom2|buttom3|buttom4|buttom5 == false){
-                              Navigator.pop(context);
-                              print('pop');
-                            }
-                          });
-                        },
-                        child:
-                        buttom2 ? Container(
-                            height: h/12,
-                            width: h/12,
-                            child: Image(image: AssetImage('assets/images/alarm/snail3.png'),fit: BoxFit.fill,)
-                        ):Container()
+                  if (weather == 2)
+                    Positioned(
+                      right: w / 5.625,
+                      bottom: h / 10,
+                      child: InkWell(
+                          onTap: () {
+                            setState(() {
+                              buttom2 = false;
+                              print('ontap');
+                              print(buttom2);
+                              if (buttom1 |
+                                      buttom2 |
+                                      buttom3 |
+                                      buttom4 |
+                                      buttom5 ==
+                                  false) {
+                                Navigator.pop(context);
+                                print('pop');
+                              }
+                            });
+                          },
+                          child: buttom2
+                              ? Container(
+                                  height: h / 12,
+                                  width: h / 12,
+                                  child: Image(
+                                    image: AssetImage(
+                                        'assets/images/alarm/snail3.png'),
+                                    fit: BoxFit.fill,
+                                  ))
+                              : Container()),
                     ),
-                  ),
-                  if(weather ==2 )
-                  Positioned(
-                    right: w/90,
-                    bottom: h/10,
-                    child: InkWell(
-                        onTap: (){
-                          setState(() {
-                            buttom3=false;
-                            print('ontap');
-                            print(buttom3);
-                            if (buttom1|buttom2|buttom3|buttom4|buttom5 == false){
-                              Navigator.pop(context);
-                              print('pop');
-                            }
-                          });
-                        },
-                        child:
-                        buttom3 ? Container(
-                            height: h/12,
-                            width: h/12,
-                            child: Image(image: AssetImage('assets/images/alarm/snail2.png'),fit: BoxFit.fill,)
-                        ):Container()
+                  if (weather == 2)
+                    Positioned(
+                      right: w / 90,
+                      bottom: h / 10,
+                      child: InkWell(
+                          onTap: () {
+                            setState(() {
+                              buttom3 = false;
+                              print('ontap');
+                              print(buttom3);
+                              if (buttom1 |
+                                      buttom2 |
+                                      buttom3 |
+                                      buttom4 |
+                                      buttom5 ==
+                                  false) {
+                                Navigator.pop(context);
+                                print('pop');
+                              }
+                            });
+                          },
+                          child: buttom3
+                              ? Container(
+                                  height: h / 12,
+                                  width: h / 12,
+                                  child: Image(
+                                    image: AssetImage(
+                                        'assets/images/alarm/snail2.png'),
+                                    fit: BoxFit.fill,
+                                  ))
+                              : Container()),
                     ),
-                  ),
-                  if(weather ==2 )
-                  Positioned(
-                    right: w/2.5,
-                    bottom: h/11,
-                    child: InkWell(
-                        onTap: (){
-                          setState(() {
-                            buttom4=false;
-                            print('ontap');
-                            print(buttom2);
-                            if (buttom1|buttom2|buttom3|buttom4|buttom5 == false){
-                              Navigator.pop(context);
-                              print('pop');
-                            }
-                          });
-                        },
-                        child:
-                        buttom4 ? Container(
-                            height: h/13,
-                            width: h/13,
-                            child: Image(image: AssetImage('assets/images/alarm/snail3.png'),fit: BoxFit.fill,)
-                        ):Container()
+                  if (weather == 2)
+                    Positioned(
+                      right: w / 2.5,
+                      bottom: h / 11,
+                      child: InkWell(
+                          onTap: () {
+                            setState(() {
+                              buttom4 = false;
+                              print('ontap');
+                              print(buttom2);
+                              if (buttom1 |
+                                      buttom2 |
+                                      buttom3 |
+                                      buttom4 |
+                                      buttom5 ==
+                                  false) {
+                                Navigator.pop(context);
+                                print('pop');
+                              }
+                            });
+                          },
+                          child: buttom4
+                              ? Container(
+                                  height: h / 13,
+                                  width: h / 13,
+                                  child: Image(
+                                    image: AssetImage(
+                                        'assets/images/alarm/snail3.png'),
+                                    fit: BoxFit.fill,
+                                  ))
+                              : Container()),
                     ),
-                  ),
-                  if(weather ==2 )
-                  Positioned(
-                    left: w/4,
-                    bottom: h/17,
-                    child: InkWell(
-                        onTap: (){
-                          setState(() {
-                            buttom5=false;
-                            print('ontap');
-                            print(buttom2);
-                            if (buttom1|buttom2|buttom3|buttom4|buttom5 == false){
-                              Navigator.pop(context);
-                              print('pop');
-                            }
-                          });
-                        },
-                        child:
-                        buttom5 ? Container(
-                            height: h/15,
-                            width: h/15,
-                            child: Image(image: AssetImage('assets/images/alarm/snail2.png'),fit: BoxFit.fill,)
-                        ):Container()
+                  if (weather == 2)
+                    Positioned(
+                      left: w / 4,
+                      bottom: h / 17,
+                      child: InkWell(
+                          onTap: () {
+                            setState(() {
+                              buttom5 = false;
+                              print('ontap');
+                              print(buttom2);
+                              if (buttom1 |
+                                      buttom2 |
+                                      buttom3 |
+                                      buttom4 |
+                                      buttom5 ==
+                                  false) {
+                                Navigator.pop(context);
+                                print('pop');
+                              }
+                            });
+                          },
+                          child: buttom5
+                              ? Container(
+                                  height: h / 15,
+                                  width: h / 15,
+                                  child: Image(
+                                    image: AssetImage(
+                                        'assets/images/alarm/snail2.png'),
+                                    fit: BoxFit.fill,
+                                  ))
+                              : Container()),
                     ),
-                  ),
-                  if(weather ==1 )
-                  Positioned(
-                    left: w/14,
-                    bottom: h/6,
-                    child: InkWell(
-                        onTap: (){
-                          setState(() {
-                            buttom1=false;
-                            print('ontap');
-                            if (buttom1|buttom2|buttom3|buttom4|buttom5 == false){
-                              Navigator.pop(context);
-                              print('pop');
-                            }
-                          });
-                        },
-                        child:
-                        buttom1 ? Container(
-                            height: h/10,
-                            width: h/10,
-                            child: Image(image: AssetImage('assets/images/alarm/麻雀2.png'),fit: BoxFit.fill,)
-                        ):Container()
+                  if (weather == 1)
+                    Positioned(
+                      left: w / 14,
+                      bottom: h / 6,
+                      child: InkWell(
+                          onTap: () {
+                            setState(() {
+                              buttom1 = false;
+                              print('ontap');
+                              if (buttom1 |
+                                      buttom2 |
+                                      buttom3 |
+                                      buttom4 |
+                                      buttom5 ==
+                                  false) {
+                                Navigator.pop(context);
+                                print('pop');
+                              }
+                            });
+                          },
+                          child: buttom1
+                              ? Container(
+                                  height: h / 10,
+                                  width: h / 10,
+                                  child: Image(
+                                    image: AssetImage(
+                                        'assets/images/alarm/麻雀2.png'),
+                                    fit: BoxFit.fill,
+                                  ))
+                              : Container()),
                     ),
-                  ),
-                  if(weather ==1 )
-                  Positioned(
-                    right: w/5.625,
-                    bottom: h/4,
-                    child: InkWell(
-                        onTap: (){
-                          setState(() {
-                            buttom2=false;
-                            print('ontap');
-                            print(buttom2);
-                            if (buttom1|buttom2|buttom3|buttom4|buttom5 == false){
-                              Navigator.pop(context);
-                              print('pop');
-                            }
-                          });
-                        },
-                        child:
-                        buttom2 ? Container(
-                            height: h/12,
-                            width: h/12,
-                            child: Image(image: AssetImage('assets/images/alarm/麻雀1.png'),fit: BoxFit.fill,)
-                        ):Container()
+                  if (weather == 1)
+                    Positioned(
+                      right: w / 5.625,
+                      bottom: h / 4,
+                      child: InkWell(
+                          onTap: () {
+                            setState(() {
+                              buttom2 = false;
+                              print('ontap');
+                              print(buttom2);
+                              if (buttom1 |
+                                      buttom2 |
+                                      buttom3 |
+                                      buttom4 |
+                                      buttom5 ==
+                                  false) {
+                                Navigator.pop(context);
+                                print('pop');
+                              }
+                            });
+                          },
+                          child: buttom2
+                              ? Container(
+                                  height: h / 12,
+                                  width: h / 12,
+                                  child: Image(
+                                    image: AssetImage(
+                                        'assets/images/alarm/麻雀1.png'),
+                                    fit: BoxFit.fill,
+                                  ))
+                              : Container()),
                     ),
-                  ),
-                  if(weather ==1 )
-                  Positioned(
-                    right: w/90,
-                    bottom: h/3,
-                    child: InkWell(
-                        onTap: (){
-                          setState(() {
-                            buttom3=false;
-                            print('ontap');
-                            print(buttom3);
-                            if (buttom1|buttom2|buttom3|buttom4|buttom5 == false){
-                              Navigator.pop(context);
-                              print('pop');
-                            }
-                          });
-                        },
-                        child:
-                        buttom3 ? Container(
-                            height: h/12,
-                            width: h/12,
-                            child: Image(image: AssetImage('assets/images/alarm/麻雀2.png'),fit: BoxFit.fill,)
-                        ):Container()
+                  if (weather == 1)
+                    Positioned(
+                      right: w / 90,
+                      bottom: h / 3,
+                      child: InkWell(
+                          onTap: () {
+                            setState(() {
+                              buttom3 = false;
+                              print('ontap');
+                              print(buttom3);
+                              if (buttom1 |
+                                      buttom2 |
+                                      buttom3 |
+                                      buttom4 |
+                                      buttom5 ==
+                                  false) {
+                                Navigator.pop(context);
+                                print('pop');
+                              }
+                            });
+                          },
+                          child: buttom3
+                              ? Container(
+                                  height: h / 12,
+                                  width: h / 12,
+                                  child: Image(
+                                    image: AssetImage(
+                                        'assets/images/alarm/麻雀2.png'),
+                                    fit: BoxFit.fill,
+                                  ))
+                              : Container()),
                     ),
-                  ),
-                  if(weather ==1 )
-                  Positioned(
-                    left: w/6,
-                    bottom: h/2.5,
-                    child: InkWell(
-                        onTap: (){
-                          setState(() {
-                            buttom4=false;
-                            print('ontap');
-                            if (buttom1|buttom2|buttom3|buttom4|buttom5 == false){
-                              Navigator.pop(context);
-                              print('pop');
-                            }
-                          });
-                        },
-                        child:
-                        buttom4 ? Container(
-                            height: h/11,
-                            width: h/11,
-                            child: Image(image: AssetImage('assets/images/alarm/麻雀1.png'),fit: BoxFit.fill,)
-                        ):Container()
+                  if (weather == 1)
+                    Positioned(
+                      left: w / 6,
+                      bottom: h / 2.5,
+                      child: InkWell(
+                          onTap: () {
+                            setState(() {
+                              buttom4 = false;
+                              print('ontap');
+                              if (buttom1 |
+                                      buttom2 |
+                                      buttom3 |
+                                      buttom4 |
+                                      buttom5 ==
+                                  false) {
+                                Navigator.pop(context);
+                                print('pop');
+                              }
+                            });
+                          },
+                          child: buttom4
+                              ? Container(
+                                  height: h / 11,
+                                  width: h / 11,
+                                  child: Image(
+                                    image: AssetImage(
+                                        'assets/images/alarm/麻雀1.png'),
+                                    fit: BoxFit.fill,
+                                  ))
+                              : Container()),
                     ),
-                  ),
-                  if(weather ==1 )
-                  Positioned(
-                    left: w/3,
-                    bottom: h/3,
-                    child: InkWell(
-                        onTap: (){
-                          setState(() {
-                            buttom5=false;
-                            print('ontap');
-                            if (buttom1|buttom2|buttom3|buttom4|buttom5 == false){
-                              Navigator.pop(context);
-                              print('pop');
-                            }
-                          });
-                        },
-                        child:
-                        buttom5 ? Container(
-                            height: h/10,
-                            width: h/10,
-                            child: Image(image: AssetImage('assets/images/alarm/麻雀1.png'),fit: BoxFit.fill,)
-                        ):Container()
+                  if (weather == 1)
+                    Positioned(
+                      left: w / 3,
+                      bottom: h / 3,
+                      child: InkWell(
+                          onTap: () {
+                            setState(() {
+                              buttom5 = false;
+                              print('ontap');
+                              if (buttom1 |
+                                      buttom2 |
+                                      buttom3 |
+                                      buttom4 |
+                                      buttom5 ==
+                                  false) {
+                                Navigator.pop(context);
+                                print('pop');
+                              }
+                            });
+                          },
+                          child: buttom5
+                              ? Container(
+                                  height: h / 10,
+                                  width: h / 10,
+                                  child: Image(
+                                    image: AssetImage(
+                                        'assets/images/alarm/麻雀1.png'),
+                                    fit: BoxFit.fill,
+                                  ))
+                              : Container()),
                     ),
-                  ),
-                  if(weather ==3 )
-                  Positioned(
-                    left: w/18,
-                    bottom: h/13,
-                    child: InkWell(
-                        onTap: (){
-                          setState(() {
-                            buttom1=false;
-                            print('ontap');
-                            if (buttom1|buttom2|buttom3|buttom4|buttom5 == false){
-                              Navigator.pop(context);
-                              print('pop');
-                            }
-                          });
-                        },
-                        child:
-                        buttom1 ? Container(
-                            height: h/9,
-                            width: h/9,
-                            child: Image(image: AssetImage('assets/images/alarm/毛毛蟲2.png'),fit: BoxFit.fill,)
-                        ):Container()
+                  if (weather == 3)
+                    Positioned(
+                      left: w / 18,
+                      bottom: h / 13,
+                      child: InkWell(
+                          onTap: () {
+                            setState(() {
+                              buttom1 = false;
+                              print('ontap');
+                              if (buttom1 |
+                                      buttom2 |
+                                      buttom3 |
+                                      buttom4 |
+                                      buttom5 ==
+                                  false) {
+                                Navigator.pop(context);
+                                print('pop');
+                              }
+                            });
+                          },
+                          child: buttom1
+                              ? Container(
+                                  height: h / 9,
+                                  width: h / 9,
+                                  child: Image(
+                                    image: AssetImage(
+                                        'assets/images/alarm/毛毛蟲2.png'),
+                                    fit: BoxFit.fill,
+                                  ))
+                              : Container()),
                     ),
-                  ),
-                  if(weather ==3 )
-                  Positioned(
-                    right: w/5.625,
-                    bottom: h/10,
-                    child: InkWell(
-                        onTap: (){
-                          setState(() {
-                            buttom2=false;
-                            print('ontap');
-                            print(buttom2);
-                            if (buttom1|buttom2|buttom3|buttom4|buttom5 == false){
-                              Navigator.pop(context);
-                              print('pop');
-                            }
-                          });
-                        },
-                        child:
-                        buttom2 ? Container(
-                            height: h/12,
-                            width: h/12,
-                            child: Image(image: AssetImage('assets/images/alarm/毛毛蟲1.png'),fit: BoxFit.fill,)
-                        ):Container()
+                  if (weather == 3)
+                    Positioned(
+                      right: w / 5.625,
+                      bottom: h / 10,
+                      child: InkWell(
+                          onTap: () {
+                            setState(() {
+                              buttom2 = false;
+                              print('ontap');
+                              print(buttom2);
+                              if (buttom1 |
+                                      buttom2 |
+                                      buttom3 |
+                                      buttom4 |
+                                      buttom5 ==
+                                  false) {
+                                Navigator.pop(context);
+                                print('pop');
+                              }
+                            });
+                          },
+                          child: buttom2
+                              ? Container(
+                                  height: h / 12,
+                                  width: h / 12,
+                                  child: Image(
+                                    image: AssetImage(
+                                        'assets/images/alarm/毛毛蟲1.png'),
+                                    fit: BoxFit.fill,
+                                  ))
+                              : Container()),
                     ),
-                  ),
-                  if(weather ==3 )
-                  Positioned(
-                    right: w/90,
-                    bottom: h/10,
-                    child: InkWell(
-                        onTap: (){
-                          setState(() {
-                            buttom3=false;
-                            print('ontap');
-                            print(buttom3);
-                            if (buttom1|buttom2|buttom3|buttom4|buttom5 == false){
-                              Navigator.pop(context);
-                              print('pop');
-                            }
-                          });
-                        },
-                        child:
-                        buttom3 ? Container(
-                            height: h/12,
-                            width: h/12,
-                            child: Image(image: AssetImage('assets/images/alarm/毛毛蟲2.png'),fit: BoxFit.fill,)
-                        ):Container()
+                  if (weather == 3)
+                    Positioned(
+                      right: w / 90,
+                      bottom: h / 10,
+                      child: InkWell(
+                          onTap: () {
+                            setState(() {
+                              buttom3 = false;
+                              print('ontap');
+                              print(buttom3);
+                              if (buttom1 |
+                                      buttom2 |
+                                      buttom3 |
+                                      buttom4 |
+                                      buttom5 ==
+                                  false) {
+                                Navigator.pop(context);
+                                print('pop');
+                              }
+                            });
+                          },
+                          child: buttom3
+                              ? Container(
+                                  height: h / 12,
+                                  width: h / 12,
+                                  child: Image(
+                                    image: AssetImage(
+                                        'assets/images/alarm/毛毛蟲2.png'),
+                                    fit: BoxFit.fill,
+                                  ))
+                              : Container()),
                     ),
-                  ),
-                  if(weather ==3 )
-                  Positioned(
-                    left: w/18,
-                    bottom: h/7,
-                    child: InkWell(
-                        onTap: (){
-                          setState(() {
-                            buttom4=false;
-                            print('ontap');
-                            if (buttom1|buttom2|buttom3|buttom4|buttom5 == false){
-                              Navigator.pop(context);
-                              print('pop');
-                            }
-                          });
-                        },
-                        child:
-                        buttom4 ? Container(
-                            height: h/12,
-                            width: h/12,
-                            child: Image(image: AssetImage('assets/images/alarm/毛毛蟲1.png'),fit: BoxFit.fill,)
-                        ):Container()
+                  if (weather == 3)
+                    Positioned(
+                      left: w / 18,
+                      bottom: h / 7,
+                      child: InkWell(
+                          onTap: () {
+                            setState(() {
+                              buttom4 = false;
+                              print('ontap');
+                              if (buttom1 |
+                                      buttom2 |
+                                      buttom3 |
+                                      buttom4 |
+                                      buttom5 ==
+                                  false) {
+                                Navigator.pop(context);
+                                print('pop');
+                              }
+                            });
+                          },
+                          child: buttom4
+                              ? Container(
+                                  height: h / 12,
+                                  width: h / 12,
+                                  child: Image(
+                                    image: AssetImage(
+                                        'assets/images/alarm/毛毛蟲1.png'),
+                                    fit: BoxFit.fill,
+                                  ))
+                              : Container()),
                     ),
-                  ),
-                  if(weather ==3 )
-                  Positioned(
-                    left: w/2.5,
-                    bottom: h/11,
-                    child: InkWell(
-                        onTap: (){
-                          setState(() {
-                            buttom5=false;
-                            print('ontap');
-                            if (buttom1|buttom2|buttom3|buttom4|buttom5 == false){
-                              Navigator.pop(context);
-                              print('pop');
-                            }
-                          });
-                        },
-                        child:
-                        buttom5 ? Container(
-                            height: h/10,
-                            width: h/10,
-                            child: Image(image: AssetImage('assets/images/alarm/毛毛蟲2.png'),fit: BoxFit.fill,)
-                        ):Container()
+                  if (weather == 3)
+                    Positioned(
+                      left: w / 2.5,
+                      bottom: h / 11,
+                      child: InkWell(
+                          onTap: () {
+                            setState(() {
+                              buttom5 = false;
+                              print('ontap');
+                              if (buttom1 |
+                                      buttom2 |
+                                      buttom3 |
+                                      buttom4 |
+                                      buttom5 ==
+                                  false) {
+                                Navigator.pop(context);
+                                print('pop');
+                              }
+                            });
+                          },
+                          child: buttom5
+                              ? Container(
+                                  height: h / 10,
+                                  width: h / 10,
+                                  child: Image(
+                                    image: AssetImage(
+                                        'assets/images/alarm/毛毛蟲2.png'),
+                                    fit: BoxFit.fill,
+                                  ))
+                              : Container()),
                     ),
-                  ),
                 ],
               ),
             );
@@ -819,158 +981,172 @@ class _NotificationScreenState extends State<NotificationScreen> {
   }
 }
 
-
 class RainingDays extends StatefulWidget {
   @override
   _RainingDaysState createState() => _RainingDaysState();
 }
 
 class _RainingDaysState extends State<RainingDays> {
-  var currenttime=DateTime.now();
-  bool buttom1=true;
-  bool buttom2=true;
-  bool buttom3=true;
-  bool buttom4=true;
-  bool buttom5=true;
+  var currenttime = DateTime.now();
+  bool buttom1 = true;
+  bool buttom2 = true;
+  bool buttom3 = true;
+  bool buttom4 = true;
+  bool buttom5 = true;
 
   @override
   Widget build(BuildContext context) {
-    final size =MediaQuery.of(context).size;
-    final width =size.width;
-    final height =size.height;
+    final size = MediaQuery.of(context).size;
+    final width = size.width;
+    final height = size.height;
     return Scaffold(
       body: Container(
         child: Stack(
           children: [
             Positioned(
-              top: height/3.37,
-              left: width/6,
+              top: height / 3.37,
+              left: width / 6,
               child: Card(
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-                color: Color.fromRGBO(221,194,159,1),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(20)),
+                color: Color.fromRGBO(221, 194, 159, 1),
                 child: Container(
-                  height: height/6.4,
-                  width: width/3*2,
+                  height: height / 6.4,
+                  width: width / 3 * 2,
                   alignment: Alignment.center,
-                  child: Text(
-                      '${currenttime.hour} : ${currenttime.minute}',style: TextStyle(color: Colors.white,fontSize: 40)
-                  ),
+                  child: Text('${currenttime.hour} : ${currenttime.minute}',
+                      style: TextStyle(color: Colors.white, fontSize: 40)),
                 ),
               ),
             ),
             Positioned(
-              left: width/18,
-              bottom: height/10,
+              left: width / 18,
+              bottom: height / 10,
               child: InkWell(
-                  onTap: (){
+                  onTap: () {
                     setState(() {
-                      buttom1=false;
+                      buttom1 = false;
                       print('ontap');
-                      if (buttom1|buttom2|buttom3|buttom4|buttom5 == false){
+                      if (buttom1 | buttom2 | buttom3 | buttom4 | buttom5 ==
+                          false) {
                         Navigator.pop(context);
                         print('pop');
                       }
                     });
                   },
-                  child:
-                  buttom1 ? Container(
-                      height: height/9,
-                      width: height/9,
-                      child: Image(image: AssetImage('assets/images/alarm/snail3.png'),fit: BoxFit.fill,)
-                  ):Container()
-              ),
+                  child: buttom1
+                      ? Container(
+                          height: height / 9,
+                          width: height / 9,
+                          child: Image(
+                            image: AssetImage('assets/images/alarm/snail3.png'),
+                            fit: BoxFit.fill,
+                          ))
+                      : Container()),
             ),
             Positioned(
-              right: width/5.625,
-              bottom: height/10,
+              right: width / 5.625,
+              bottom: height / 10,
               child: InkWell(
-                  onTap: (){
+                  onTap: () {
                     setState(() {
-                      buttom2=false;
+                      buttom2 = false;
                       print('ontap');
                       print(buttom2);
-                      if (buttom1|buttom2|buttom3|buttom4|buttom5 == false){
+                      if (buttom1 | buttom2 | buttom3 | buttom4 | buttom5 ==
+                          false) {
                         Navigator.pop(context);
                         print('pop');
                       }
                     });
                   },
-                  child:
-                  buttom2 ? Container(
-                      height: height/12,
-                      width: height/12,
-                      child: Image(image: AssetImage('assets/images/alarm/snail3.png'),fit: BoxFit.fill,)
-                  ):Container()
-              ),
+                  child: buttom2
+                      ? Container(
+                          height: height / 12,
+                          width: height / 12,
+                          child: Image(
+                            image: AssetImage('assets/images/alarm/snail3.png'),
+                            fit: BoxFit.fill,
+                          ))
+                      : Container()),
             ),
             Positioned(
-              right: width/90,
-              bottom: height/10,
+              right: width / 90,
+              bottom: height / 10,
               child: InkWell(
-                  onTap: (){
+                  onTap: () {
                     setState(() {
-                      buttom3=false;
+                      buttom3 = false;
                       print('ontap');
                       print(buttom3);
-                      if (buttom1|buttom2|buttom3|buttom4|buttom5 == false){
+                      if (buttom1 | buttom2 | buttom3 | buttom4 | buttom5 ==
+                          false) {
                         Navigator.pop(context);
                         print('pop');
                       }
                     });
                   },
-                  child:
-                  buttom3 ? Container(
-                      height: height/12,
-                      width: height/12,
-                      child: Image(image: AssetImage('assets/images/alarm/snail2.png'),fit: BoxFit.fill,)
-                  ):Container()
-              ),
+                  child: buttom3
+                      ? Container(
+                          height: height / 12,
+                          width: height / 12,
+                          child: Image(
+                            image: AssetImage('assets/images/alarm/snail2.png'),
+                            fit: BoxFit.fill,
+                          ))
+                      : Container()),
             ),
             Positioned(
-              right: width/2.5,
-              bottom: height/11,
+              right: width / 2.5,
+              bottom: height / 11,
               child: InkWell(
-                  onTap: (){
+                  onTap: () {
                     setState(() {
-                      buttom4=false;
+                      buttom4 = false;
                       print('ontap');
                       print(buttom2);
-                      if (buttom1|buttom2|buttom3|buttom4|buttom5 == false){
+                      if (buttom1 | buttom2 | buttom3 | buttom4 | buttom5 ==
+                          false) {
                         Navigator.pop(context);
                         print('pop');
                       }
                     });
                   },
-                  child:
-                  buttom4 ? Container(
-                      height: height/13,
-                      width: height/13,
-                      child: Image(image: AssetImage('assets/images/alarm/snail3.png'),fit: BoxFit.fill,)
-                  ):Container()
-              ),
+                  child: buttom4
+                      ? Container(
+                          height: height / 13,
+                          width: height / 13,
+                          child: Image(
+                            image: AssetImage('assets/images/alarm/snail3.png'),
+                            fit: BoxFit.fill,
+                          ))
+                      : Container()),
             ),
             Positioned(
-              left: width/4,
-              bottom: height/17,
+              left: width / 4,
+              bottom: height / 17,
               child: InkWell(
-                  onTap: (){
+                  onTap: () {
                     setState(() {
-                      buttom5=false;
+                      buttom5 = false;
                       print('ontap');
                       print(buttom2);
-                      if (buttom1|buttom2|buttom3|buttom4|buttom5 == false){
+                      if (buttom1 | buttom2 | buttom3 | buttom4 | buttom5 ==
+                          false) {
                         Navigator.pop(context);
                         print('pop');
                       }
                     });
                   },
-                  child:
-                  buttom5 ? Container(
-                      height: height/15,
-                      width: height/15,
-                      child: Image(image: AssetImage('assets/images/alarm/snail2.png'),fit: BoxFit.fill,)
-                  ):Container()
-              ),
+                  child: buttom5
+                      ? Container(
+                          height: height / 15,
+                          width: height / 15,
+                          child: Image(
+                            image: AssetImage('assets/images/alarm/snail2.png'),
+                            fit: BoxFit.fill,
+                          ))
+                      : Container()),
             ),
           ],
         ),
@@ -978,7 +1154,6 @@ class _RainingDaysState extends State<RainingDays> {
     );
   }
 }
-
 
 class SunnyDay extends StatefulWidget {
   @override
@@ -986,150 +1161,165 @@ class SunnyDay extends StatefulWidget {
 }
 
 class _SunnyDayState extends State<SunnyDay> {
-  var currenttime=DateTime.now();
-  bool buttom1=true;
-  bool buttom2=true;
-  bool buttom3=true;
-  bool buttom4=true;
-  bool buttom5=true;
+  var currenttime = DateTime.now();
+  bool buttom1 = true;
+  bool buttom2 = true;
+  bool buttom3 = true;
+  bool buttom4 = true;
+  bool buttom5 = true;
 
   @override
   Widget build(BuildContext context) {
-    final size =MediaQuery.of(context).size;
-    final width =size.width;
-    final height =size.height;
+    final size = MediaQuery.of(context).size;
+    final width = size.width;
+    final height = size.height;
     return Scaffold(
       body: Container(
         color: Colors.transparent,
         child: Stack(
           children: [
             Positioned(
-              top: height/3.37,
-              left: width/6,
+              top: height / 3.37,
+              left: width / 6,
               child: Card(
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-                color: Color.fromRGBO(221,194,159,1),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(20)),
+                color: Color.fromRGBO(221, 194, 159, 1),
                 child: Container(
-                  height: height/6.4,
-                  width: width/3*2,
+                  height: height / 6.4,
+                  width: width / 3 * 2,
                   alignment: Alignment.center,
-                  child: Text(
-                      '${currenttime.hour} : ${currenttime.minute}',style: TextStyle(color: Colors.white,fontSize: 40)
-                  ),
+                  child: Text('${currenttime.hour} : ${currenttime.minute}',
+                      style: TextStyle(color: Colors.white, fontSize: 40)),
                 ),
               ),
             ),
             Positioned(
-              left: width/14,
-              bottom: height/6,
+              left: width / 14,
+              bottom: height / 6,
               child: InkWell(
-                  onTap: (){
+                  onTap: () {
                     setState(() {
-                      buttom1=false;
+                      buttom1 = false;
                       print('ontap');
-                      if (buttom1|buttom2|buttom3|buttom4|buttom5 == false){
+                      if (buttom1 | buttom2 | buttom3 | buttom4 | buttom5 ==
+                          false) {
                         Navigator.pop(context);
                         print('pop');
                       }
                     });
                   },
-                  child:
-                  buttom1 ? Container(
-                      height: height/10,
-                      width: height/10,
-                      child: Image(image: AssetImage('assets/images/alarm/麻雀2.png'),fit: BoxFit.fill,)
-                  ):Container()
-              ),
+                  child: buttom1
+                      ? Container(
+                          height: height / 10,
+                          width: height / 10,
+                          child: Image(
+                            image: AssetImage('assets/images/alarm/麻雀2.png'),
+                            fit: BoxFit.fill,
+                          ))
+                      : Container()),
             ),
             Positioned(
-              right: width/5.625,
-              bottom: height/4,
+              right: width / 5.625,
+              bottom: height / 4,
               child: InkWell(
-                  onTap: (){
+                  onTap: () {
                     setState(() {
-                      buttom2=false;
+                      buttom2 = false;
                       print('ontap');
                       print(buttom2);
-                      if (buttom1|buttom2|buttom3|buttom4|buttom5 == false){
+                      if (buttom1 | buttom2 | buttom3 | buttom4 | buttom5 ==
+                          false) {
                         Navigator.pop(context);
                         print('pop');
                       }
                     });
                   },
-                  child:
-                  buttom2 ? Container(
-                      height: height/12,
-                      width: height/12,
-                      child: Image(image: AssetImage('assets/images/alarm/麻雀1.png'),fit: BoxFit.fill,)
-                  ):Container()
-              ),
+                  child: buttom2
+                      ? Container(
+                          height: height / 12,
+                          width: height / 12,
+                          child: Image(
+                            image: AssetImage('assets/images/alarm/麻雀1.png'),
+                            fit: BoxFit.fill,
+                          ))
+                      : Container()),
             ),
             Positioned(
-              right: width/90,
-              bottom: height/3,
+              right: width / 90,
+              bottom: height / 3,
               child: InkWell(
-                  onTap: (){
+                  onTap: () {
                     setState(() {
-                      buttom3=false;
+                      buttom3 = false;
                       print('ontap');
                       print(buttom3);
-                      if (buttom1|buttom2|buttom3|buttom4|buttom5 == false){
+                      if (buttom1 | buttom2 | buttom3 | buttom4 | buttom5 ==
+                          false) {
                         Navigator.pop(context);
                         print('pop');
                       }
                     });
                   },
-                  child:
-                  buttom3 ? Container(
-                      height: height/12,
-                      width: height/12,
-                      child: Image(image: AssetImage('assets/images/alarm/麻雀2.png'),fit: BoxFit.fill,)
-                  ):Container()
-              ),
+                  child: buttom3
+                      ? Container(
+                          height: height / 12,
+                          width: height / 12,
+                          child: Image(
+                            image: AssetImage('assets/images/alarm/麻雀2.png'),
+                            fit: BoxFit.fill,
+                          ))
+                      : Container()),
             ),
             Positioned(
-              left: width/6,
-              bottom: height/2.5,
+              left: width / 6,
+              bottom: height / 2.5,
               child: InkWell(
-                  onTap: (){
+                  onTap: () {
                     setState(() {
-                      buttom4=false;
+                      buttom4 = false;
                       print('ontap');
-                      if (buttom1|buttom2|buttom3|buttom4|buttom5 == false){
+                      if (buttom1 | buttom2 | buttom3 | buttom4 | buttom5 ==
+                          false) {
                         Navigator.pop(context);
                         print('pop');
                       }
                     });
                   },
-                  child:
-                  buttom4 ? Container(
-                      height: height/11,
-                      width: height/11,
-                      child: Image(image: AssetImage('assets/images/alarm/麻雀1.png'),fit: BoxFit.fill,)
-                  ):Container()
-              ),
+                  child: buttom4
+                      ? Container(
+                          height: height / 11,
+                          width: height / 11,
+                          child: Image(
+                            image: AssetImage('assets/images/alarm/麻雀1.png'),
+                            fit: BoxFit.fill,
+                          ))
+                      : Container()),
             ),
             Positioned(
-              left: width/3,
-              bottom: height/3,
+              left: width / 3,
+              bottom: height / 3,
               child: InkWell(
-                  onTap: (){
+                  onTap: () {
                     setState(() {
-                      buttom5=false;
+                      buttom5 = false;
                       print('ontap');
-                      if (buttom1|buttom2|buttom3|buttom4|buttom5 == false){
+                      if (buttom1 | buttom2 | buttom3 | buttom4 | buttom5 ==
+                          false) {
                         Navigator.pop(context);
                         print('pop');
                       }
                     });
                   },
-                  child:
-                  buttom5 ? Container(
-                      height: height/10,
-                      width: height/10,
-                      child: Image(image: AssetImage('assets/images/alarm/麻雀1.png'),fit: BoxFit.fill,)
-                  ):Container()
-              ),
+                  child: buttom5
+                      ? Container(
+                          height: height / 10,
+                          width: height / 10,
+                          child: Image(
+                            image: AssetImage('assets/images/alarm/麻雀1.png'),
+                            fit: BoxFit.fill,
+                          ))
+                      : Container()),
             ),
           ],
         ),
@@ -1138,157 +1328,169 @@ class _SunnyDayState extends State<SunnyDay> {
   }
 }
 
-
-
-
 class WindsDay extends StatefulWidget {
   @override
   _WindsDayState createState() => _WindsDayState();
 }
 
 class _WindsDayState extends State<WindsDay> {
-  var currenttime=DateTime.now();
-  bool buttom1=true;
-  bool buttom2=true;
-  bool buttom3=true;
-  bool buttom4=true;
-  bool buttom5=true;
+  var currenttime = DateTime.now();
+  bool buttom1 = true;
+  bool buttom2 = true;
+  bool buttom3 = true;
+  bool buttom4 = true;
+  bool buttom5 = true;
   @override
   Widget build(BuildContext context) {
-    final size =MediaQuery.of(context).size;
-    final width =size.width;
-    final height =size.height;
+    final size = MediaQuery.of(context).size;
+    final width = size.width;
+    final height = size.height;
     return Scaffold(
       body: Container(
         child: Stack(
           children: [
             Positioned(
-              top: height/3.37,
-              left: width/6,
+              top: height / 3.37,
+              left: width / 6,
               child: Card(
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-                color: Color.fromRGBO(221,194,159,1),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(20)),
+                color: Color.fromRGBO(221, 194, 159, 1),
                 child: Container(
-                  height: height/6.4,
-                  width: width/3*2,
+                  height: height / 6.4,
+                  width: width / 3 * 2,
                   alignment: Alignment.center,
-                  child: Text(
-                      '${currenttime.hour} : ${currenttime.minute}',style: TextStyle(color: Colors.white,fontSize: 40)
-                  ),
+                  child: Text('${currenttime.hour} : ${currenttime.minute}',
+                      style: TextStyle(color: Colors.white, fontSize: 40)),
                 ),
               ),
             ),
             Positioned(
-              left: width/18,
-              bottom: height/13,
+              left: width / 18,
+              bottom: height / 13,
               child: InkWell(
-                  onTap: (){
+                  onTap: () {
                     setState(() {
-                      buttom1=false;
+                      buttom1 = false;
                       print('ontap');
-                      if (buttom1|buttom2|buttom3|buttom4|buttom5 == false){
+                      if (buttom1 | buttom2 | buttom3 | buttom4 | buttom5 ==
+                          false) {
                         Navigator.pop(context);
                         print('pop');
                       }
                     });
                   },
-                  child:
-                  buttom1 ? Container(
-                      height: height/9,
-                      width: height/9,
-                      child: Image(image: AssetImage('assets/images/alarm/毛毛蟲2.png'),fit: BoxFit.fill,)
-                  ):Container()
-              ),
+                  child: buttom1
+                      ? Container(
+                          height: height / 9,
+                          width: height / 9,
+                          child: Image(
+                            image: AssetImage('assets/images/alarm/毛毛蟲2.png'),
+                            fit: BoxFit.fill,
+                          ))
+                      : Container()),
             ),
             Positioned(
-              right: width/5.625,
-              bottom: height/10,
+              right: width / 5.625,
+              bottom: height / 10,
               child: InkWell(
-                  onTap: (){
+                  onTap: () {
                     setState(() {
-                      buttom2=false;
+                      buttom2 = false;
                       print('ontap');
                       print(buttom2);
-                      if (buttom1|buttom2|buttom3|buttom4|buttom5 == false){
+                      if (buttom1 | buttom2 | buttom3 | buttom4 | buttom5 ==
+                          false) {
                         Navigator.pop(context);
                         print('pop');
                       }
                     });
                   },
-                  child:
-                  buttom2 ? Container(
-                      height: height/12,
-                      width: height/12,
-                      child: Image(image: AssetImage('assets/images/alarm/毛毛蟲1.png'),fit: BoxFit.fill,)
-                  ):Container()
-              ),
+                  child: buttom2
+                      ? Container(
+                          height: height / 12,
+                          width: height / 12,
+                          child: Image(
+                            image: AssetImage('assets/images/alarm/毛毛蟲1.png'),
+                            fit: BoxFit.fill,
+                          ))
+                      : Container()),
             ),
             Positioned(
-              right: width/90,
-              bottom: height/10,
+              right: width / 90,
+              bottom: height / 10,
               child: InkWell(
-                  onTap: (){
+                  onTap: () {
                     setState(() {
-                      buttom3=false;
+                      buttom3 = false;
                       print('ontap');
                       print(buttom3);
-                      if (buttom1|buttom2|buttom3|buttom4|buttom5 == false){
+                      if (buttom1 | buttom2 | buttom3 | buttom4 | buttom5 ==
+                          false) {
                         Navigator.pop(context);
                         print('pop');
                       }
                     });
                   },
-                  child:
-                  buttom3 ? Container(
-                      height: height/12,
-                      width: height/12,
-                      child: Image(image: AssetImage('assets/images/alarm/毛毛蟲2.png'),fit: BoxFit.fill,)
-                  ):Container()
-              ),
+                  child: buttom3
+                      ? Container(
+                          height: height / 12,
+                          width: height / 12,
+                          child: Image(
+                            image: AssetImage('assets/images/alarm/毛毛蟲2.png'),
+                            fit: BoxFit.fill,
+                          ))
+                      : Container()),
             ),
             Positioned(
-              left: width/18,
-              bottom: height/7,
+              left: width / 18,
+              bottom: height / 7,
               child: InkWell(
-                  onTap: (){
+                  onTap: () {
                     setState(() {
-                      buttom4=false;
+                      buttom4 = false;
                       print('ontap');
-                      if (buttom1|buttom2|buttom3|buttom4|buttom5 == false){
+                      if (buttom1 | buttom2 | buttom3 | buttom4 | buttom5 ==
+                          false) {
                         Navigator.pop(context);
                         print('pop');
                       }
                     });
                   },
-                  child:
-                  buttom4 ? Container(
-                      height: height/12,
-                      width: height/12,
-                      child: Image(image: AssetImage('assets/images/alarm/毛毛蟲1.png'),fit: BoxFit.fill,)
-                  ):Container()
-              ),
+                  child: buttom4
+                      ? Container(
+                          height: height / 12,
+                          width: height / 12,
+                          child: Image(
+                            image: AssetImage('assets/images/alarm/毛毛蟲1.png'),
+                            fit: BoxFit.fill,
+                          ))
+                      : Container()),
             ),
             Positioned(
-              left: width/2.5,
-              bottom: height/11,
+              left: width / 2.5,
+              bottom: height / 11,
               child: InkWell(
-                  onTap: (){
+                  onTap: () {
                     setState(() {
-                      buttom5=false;
+                      buttom5 = false;
                       print('ontap');
-                      if (buttom1|buttom2|buttom3|buttom4|buttom5 == false){
+                      if (buttom1 | buttom2 | buttom3 | buttom4 | buttom5 ==
+                          false) {
                         Navigator.pop(context);
                         print('pop');
                       }
                     });
                   },
-                  child:
-                  buttom5 ? Container(
-                      height: height/10,
-                      width: height/10,
-                      child: Image(image: AssetImage('assets/images/alarm/毛毛蟲2.png'),fit: BoxFit.fill,)
-                  ):Container()
-              ),
+                  child: buttom5
+                      ? Container(
+                          height: height / 10,
+                          width: height / 10,
+                          child: Image(
+                            image: AssetImage('assets/images/alarm/毛毛蟲2.png'),
+                            fit: BoxFit.fill,
+                          ))
+                      : Container()),
             ),
           ],
         ),

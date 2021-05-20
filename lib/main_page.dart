@@ -58,6 +58,7 @@ class _MainPageState extends State<MainPage> {
   ];
 
   var random = Random();
+
   ///從這行
   onNotificationInLowerVersions(ReceivedNotification receivedNotification) {
     print('Notification Received ${receivedNotification.id}');
@@ -177,11 +178,14 @@ class _MainPageState extends State<MainPage> {
 
     getcropdata();
     getWeatherInfoSF();
-    weatherDataBase(timeNow, date, dateTomorrow);
+    //weatherDataBase(timeNow, date, dateTomorrow);
 
     return FutureBuilder<List>(
-        future: Future.wait(
-            [ConnectWeatherData.instance.queryAll(), getWeatherInfoSF()]),
+        future: Future.wait([
+          ConnectWeatherData.instance.queryAll(),
+          getWeatherInfoSF(),
+          weatherDataBase(timeNow, date, dateTomorrow)
+        ]),
         builder: (BuildContext context, AsyncSnapshot<List<dynamic>> snapshot) {
           print(snapshot.data);
           if (snapshot
@@ -239,7 +243,16 @@ class _MainPageState extends State<MainPage> {
                   sunFall: sunFall,
                   route: skyRoute,
                 ),
-
+                (precipprob > 30) //raining
+                    ? Container(
+                        child: Image.asset(
+                          'assets/images/cloud/raining.gif',
+                          fit: BoxFit.fill,
+                        ),
+                        width: MediaQuery.of(context).size.width,
+                        height: MediaQuery.of(context).size.height,
+                      )
+                    : Container(),
                 SunMoon(
                   //sun
                   val: val,
@@ -339,7 +352,8 @@ class _MainPageState extends State<MainPage> {
                               Navigator.of(context).push(
                                 //opaque: false, // set to false
 
-                                MaterialPageRoute(builder: (context) => MyAlarm()),
+                                MaterialPageRoute(
+                                    builder: (context) => MyAlarm()),
 
                                 // pageBuilder: (_, __, ___) => setting_page(
                                 //     skyRoute: skyRoute,
@@ -482,7 +496,14 @@ class _MainPageState extends State<MainPage> {
                 ),
                 Positioned(
                   bottom: h * 0.05,
-                  child: Image.asset('assets/images/crop/crop_$cropType.png'),
+                  left: w * 0.05,
+                  child: Container(
+                    width: w * 0.9,
+                    child: Image.asset(
+                      'assets/images/crop/crop_$cropType.png',
+                      fit: BoxFit.fill,
+                    ),
+                  ),
                 ),
                 AnimatedPositioned(
                   //拉條

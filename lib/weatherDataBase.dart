@@ -129,7 +129,7 @@ Future weatherDataBase(double timeNow, List date, List dateTomorrow) async {
     ConnectWeatherData.precipprob: '$precipprob',
     ConnectWeatherData.humidity: '$humidity',
   });
-
+  return response;
   //print(Provider.of<WeatherData>(context).sunRise);
   // var description = data['weather']['description'];
   // var temp = data['main']['temp'];
