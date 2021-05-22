@@ -3,6 +3,8 @@ import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:growingrice_withalarm/data/weather_data.dart';
+import 'package:provider/provider.dart';
 import 'NotificationPlugin.dart';
 import 'alarm_helper.dart';
 import 'notificationscreen.dart';
@@ -75,73 +77,82 @@ class _MyAlarmState extends State<MyAlarm> {
   Widget build(BuildContext context) {
     //
     //SystemChrome.setEnabledSystemUIOverlays([SystemUiOverlay.bottom]);
+    String skyRoute = Provider.of<WeatherData>(context).skyRoute;
     debugPaintSizeEnabled = false;
     final size = MediaQuery.of(context).size;
     final width = size.width;
     final height = size.height;
     return Scaffold(
       body: Container(
-        alignment: Alignment.topCenter,
-        color: Colors.lightBlueAccent[100],
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            Container(
-              alignment: Alignment.topLeft,
-              height: height / 6.4,
-              child: Stack(
-                alignment: Alignment.center,
-                children: [
-                  Positioned(
-                    top: MediaQuery.of(context).padding.top + width / 20,
-                    left: width / 20,
-                    child: Container(
-                      alignment: Alignment.center,
-                      height: width / 9,
-                      width: height / 16,
+        decoration: BoxDecoration(
+          image: DecorationImage(
+            image: new ExactAssetImage(
+                skyRoute ?? "assets/images/sky/day.png"),
+            fit: BoxFit.cover,
+          ),
+        ),
+        child: Container(
+          alignment: Alignment.topCenter,
+          color: Colors.white.withOpacity(0.6),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Container(
+                alignment: Alignment.topLeft,
+                height: height / 6.4,
+                child: Stack(
+                  alignment: Alignment.center,
+                  children: [
+                    Positioned(
+                      top: MediaQuery.of(context).padding.top + width / 20,
+                      left: width / 24,
                       child: Container(
                         child: InkWell(
                           onTap: () {
                             Navigator.pop(context);
                           },
-                          child: Image(
-                            image: AssetImage('assets/home.png'),
-                            fit: BoxFit.fill,
+                          child: Container(
+                            height: height/17.297,
+                            width: width/7.5,
+                            child: Image(
+                              image: AssetImage("assets/images/toolIcon/return.png"),
+                              fit: BoxFit.fitWidth,
+                            ),
                           ),
                         ),
                       ),
                     ),
-                  ),
-                  Positioned(
-                    top: MediaQuery.of(context).padding.top + width / 20,
-                    child: Container(
-                      alignment: Alignment.center,
-                      child: Text(
-                        '鬧鐘',
-                        style: TextStyle(
-                            fontSize: 20, fontWeight: FontWeight.bold),
+                    Positioned(
+                      top: MediaQuery.of(context).padding.top + width / 20,
+                      child: Container(
+                        alignment: Alignment.center,
+                        child: Text(
+                          '鬧鐘',
+                          style: TextStyle(
+                              fontSize: 20, fontWeight: FontWeight.bold),
+                        ),
                       ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
-            ),
-            Expanded(
-              child: alarm_Listview(
-                alarmHelper: _alarmHelper,
-                alarms: _alarms,
-                currentAlarms: _currentAlarms,
-                loadAlarms: loadAlarms,
-              ),
-            ),
-            Padding(
-                padding: EdgeInsets.fromLTRB(0, 0, 0, height / 20),
-                child: Center(
-                    child: sheet(
+              Expanded(
+                child: alarm_Listview(
                   alarmHelper: _alarmHelper,
-                  loadAlarm: loadAlarms,
-                ))),
-          ],
+                  alarms: _alarms,
+                  currentAlarms: _currentAlarms,
+                  loadAlarms: loadAlarms,
+                ),
+              ),
+              Padding(
+                  padding: EdgeInsets.fromLTRB(0, 0, 0, height / 20),
+                  child: Center(
+                      child: sheet(
+                    alarmHelper: _alarmHelper,
+                    loadAlarm: loadAlarms,
+                  ))),
+            ],
+          ),
         ),
       ),
     );
