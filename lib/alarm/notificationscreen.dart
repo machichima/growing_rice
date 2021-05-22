@@ -223,28 +223,58 @@ class _NotificationScreenState extends State<NotificationScreen> {
                         : val_12 > sunFall + 1 || val_12 < sunRise - 1
                             ? 'assets/images/sky/night.png'
                             : 'assets/images/sky/day.png';
-            List cloudCoverData =
-                json.decode(snapshot.data[0][0]['cloudCover']);
-            double cloudCover = cloudCoverData[(val - timeNow).toInt()] ?? 0;
-            List tempData = json.decode(snapshot.data[0][0]['temp']);
-            double temp = tempData[(val - timeNow).toInt()] ?? 0;
-            List feelTempData = json.decode(snapshot.data[0][0]['feelTemp']);
-            double feelTemp = feelTempData[(val - timeNow).toInt()] ?? 0;
-            List precipprobData =
-                json.decode(snapshot.data[0][0]['precipprob']);
-            double precipprob = precipprobData[(val - timeNow).toInt()] ?? 0;
-            List windSpeedData = json.decode(snapshot.data[0][0]['windSpeed']);
-            double windSpeed = windSpeedData[(val - timeNow).toInt()] ?? 0;
-            List humidityData = json.decode(snapshot.data[0][0]['windSpeed']);
-            double humidity = humidityData[(val - timeNow).toInt()] ?? 0;
+            List cloudCoverData = json
+                .decode(snapshot.data[0][0]['cloudCover'])
+                .sublist(timeNow.toInt(), snapshot.data[2][1]);
 
-            for (int i = timeNow.toInt(); i < snapshot.data[2][1]; i++) {
+            List tempData = json
+                .decode(snapshot.data[0][0]['temp'])
+                .sublist(timeNow.toInt(), snapshot.data[2][1]);
+            int maxTemp =
+                (tempData.reduce((curr, next) => curr + next) / tempData.length)
+                    .toInt();
+
+            List feelTempData = json
+                .decode(snapshot.data[0][0]['feelTemp'])
+                .sublist(timeNow.toInt(), snapshot.data[2][1]);
+            int maxFeelTemp =
+                (feelTempData.reduce((curr, next) => curr + next) /
+                        feelTempData.length)
+                    .toInt();
+
+            List precipprobData = json
+                .decode(snapshot.data[0][0]['precipprob'])
+                .sublist(timeNow.toInt(), snapshot.data[2][1]);
+            int maxPrecipprob =
+                (precipprobData.reduce((curr, next) => curr + next) /
+                        precipprobData.length)
+                    .toInt();
+
+            List windSpeedData = json
+                .decode(snapshot.data[0][0]['windSpeed'])
+                .sublist(timeNow.toInt(), snapshot.data[2][1]);
+            int maxWindSpeed =
+                (windSpeedData.reduce((curr, next) => curr + next) /
+                        windSpeedData.length)
+                    .toInt();
+
+            List humidityData = json
+                .decode(snapshot.data[0][0]['windSpeed'])
+                .sublist(timeNow.toInt(), snapshot.data[2][1]);
+            int maxHumidity =
+                (humidityData.reduce((curr, next) => curr + next) /
+                        humidityData.length)
+                    .toInt();
+
+            for (int i = timeNow.toInt();
+                i < snapshot.data[2][1] - timeNow.toInt();
+                i++) {
               //確認在當下時間到回家時間的期間會不會下雨
-              if (precipprobData[i] > 30) {
+              if (precipprobData[i] >= 30) {
                 weather = 2;
                 break;
               }
-              if (cloudCoverData[i] > 50) {
+              if (cloudCoverData[i] >= 50) {
                 //確認在當下時間到回家時間的期間是不是陰天
                 weather = 3;
               }
@@ -327,7 +357,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
                           if (info['temp'])
                             WeatherIcon(
                               iconTypeName: 'temp',
-                              iconType: temp,
+                              iconType: maxTemp,
                               val_12: val_12,
                               sunRise: sunRise,
                               sunFall: sunFall,
@@ -336,7 +366,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
                           if (info['feelTemp'])
                             WeatherIcon(
                               iconTypeName: 'feelTemp',
-                              iconType: feelTemp,
+                              iconType: maxFeelTemp,
                               val_12: val_12,
                               sunRise: sunRise,
                               sunFall: sunFall,
@@ -345,7 +375,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
                           if (info['rain'])
                             WeatherIcon(
                               iconTypeName: 'precipprob',
-                              iconType: precipprob,
+                              iconType: maxPrecipprob,
                               val_12: val_12,
                               sunRise: sunRise,
                               sunFall: sunFall,
@@ -354,7 +384,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
                           if (info['windSpeed'])
                             WeatherIcon(
                               iconTypeName: 'windSpeed',
-                              iconType: windSpeed,
+                              iconType: maxWindSpeed,
                               val_12: val_12,
                               sunRise: sunRise,
                               sunFall: sunFall,
@@ -363,7 +393,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
                           if (info['humidity'])
                             WeatherIcon(
                               iconTypeName: 'humidity',
-                              iconType: humidity,
+                              iconType: maxHumidity,
                               val_12: val_12,
                               sunRise: sunRise,
                               sunFall: sunFall,

@@ -36,7 +36,7 @@ Future<Position> determinePosition() async {
 }
 
 Future<List> loc() async {
-  var position = await determinePosition();
+  var position = await determinePosition().catchError((error) => {exit(1)});
   Coordinates coor = Coordinates(position.latitude, position.longitude);
   var addresses = await Geocoder.local.findAddressesFromCoordinates(coor);
   return [addresses.first.adminArea, addresses.first.countryCode];

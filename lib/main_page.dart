@@ -59,6 +59,12 @@ class _MainPageState extends State<MainPage> {
 
   var random = Random();
 
+  addClockTimeToSF(int dataOut, int dataBack) async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    prefs.setInt('backTime', dataBack);
+    prefs.setInt('outTime', dataOut);
+  }
+
   ///從這行
   onNotificationInLowerVersions(ReceivedNotification receivedNotification) {
     print('Notification Received ${receivedNotification.id}');
@@ -84,6 +90,7 @@ class _MainPageState extends State<MainPage> {
 
   @override
   Widget build(BuildContext context) {
+    addClockTimeToSF(7, 17);
     int moonRise = 15;
     int moonFall = 2;
     double w = MediaQuery.of(context).size.width;
@@ -265,7 +272,6 @@ class _MainPageState extends State<MainPage> {
                           : 'assets/images/sun/sun_noon.png',
                   isMoon: false,
                 ),
-
                 SunMoon(
                   //moon
                   val: val,
@@ -401,79 +407,6 @@ class _MainPageState extends State<MainPage> {
                     ),
                   ),
                 ),
-/////////////////////////////////////////////////////////////////////////
-                // if (Provider.of<WeatherData>(context).getWeather)
-                //   Positioned(
-                //     top: 50,
-                //     child: FlatButton(
-                //       child: Container(
-                //         width: 50,
-                //         height: 50,
-                //         color: Colors.black,
-                //       ),
-                //       onPressed: () async {
-                //         int i = await ConnectCropData.instance.insertCrop({
-                //           ConnectCropData.cropId: 1,
-                //           ConnectCropData.cropType: 1,
-                //           ConnectCropData.nextDate:
-                //               "${cropChangeDate[0]}-${cropChangeDate[1]}-${cropChangeDate[2]}"
-                //         });
-                //         print('data insert $i');
-                //       },
-                //     ),
-                //   ),
-                // if (Provider.of<WeatherData>(context).getWeather)
-                //   Positioned(
-                //     top: 100,
-                //     child: FlatButton(
-                //       child: Container(
-                //         width: 50,
-                //         height: 50,
-                //         color: Colors.green,
-                //       ),
-                //       onPressed: () async {
-                //         List<Map<String, dynamic>> i =
-                //             await ConnectCropData.instance.queryAll();
-                //         print(i);
-                //       },
-                //     ),
-                //   ),
-                // if (Provider.of<WeatherData>(context).getWeather)
-                //   Positioned(
-                //     top: 150,
-                //     child: FlatButton(
-                //       child: Container(
-                //         width: 50,
-                //         height: 50,
-                //         color: Colors.blue,
-                //       ),
-                //       onPressed: () async {
-                //         int i = await ConnectCropData.instance.update({
-                //           ConnectCropData.cropId: 1,
-                //           ConnectCropData.cropType: 1,
-                //           ConnectCropData.nextDate:
-                //               "${cropChangeDate[0]}-${cropChangeDate[1]}-${cropChangeDate[2]}"
-                //         });
-                //         print(i);
-                //       },
-                //     ),
-                //   ),
-                // if (Provider.of<WeatherData>(context).getWeather)
-                //   Positioned(
-                //     top: 200,
-                //     child: FlatButton(
-                //       child: Container(
-                //         width: 50,
-                //         height: 50,
-                //         color: Colors.red,
-                //       ),
-                //       onPressed: () async {
-                //         int i = await ConnectCropData.instance.delete(1);
-                //         print(i);
-                //       },
-                //     ),
-                //   ),
-/////////////////////////////////////////////////////////////////////
                 Positioned(
                   //soil
                   top: h * 0.9,
