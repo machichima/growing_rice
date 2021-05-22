@@ -72,6 +72,7 @@ flutter:
     - assets/images/scale.png
     - assets/images/sky/
     - assets/images/sun/
+    - assets/images/ill_brick.jpg
     - assets/images/moon/
     - assets/images/clock/
     - assets/images/soil/
