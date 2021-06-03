@@ -103,6 +103,7 @@ Future weatherDataBase(double timeNow, List date, List dateTomorrow) async {
       humidity.add(values['days'][0]['hours'][i]['humidity']);
     }
     if (timeNow + 23 >= 24) {
+      //當timeNow + 23不是 >= 24時，表示timeNow為0，所以沒有第二天的資料
       //second day
       sunRise.add(int.parse(values['days'][1]['sunrise'].split(':')[0]));
       sunSet.add(int.parse(values['days'][1]['sunset'].split(':')[0]));

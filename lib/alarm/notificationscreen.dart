@@ -189,6 +189,40 @@ class _NotificationScreenState extends State<NotificationScreen> {
       }
     }
 
+    List weaDataTimeFunc(int timeNow, int outTime, int backTime) {
+      int startAverageWeaTime = 0, endAverageWeaTime = 0;
+      if (outTime > backTime) {
+        backTime += 24;
+      }
+      int outsideTime = backTime - outTime;
+      if (timeNow > outTime) {
+        int x = timeNow - outTime;
+        if (x > outsideTime) {
+          print(24 - x); //start index
+          startAverageWeaTime = (24 - x);
+          endAverageWeaTime = startAverageWeaTime + outsideTime;
+          return [startAverageWeaTime, endAverageWeaTime];
+        }
+        if (x < outsideTime) {
+          print(backTime - timeNow);
+          startAverageWeaTime = 0;
+          endAverageWeaTime = backTime - timeNow;
+          //start = timeNow
+          //end = backTime - timeNow
+          return [startAverageWeaTime, endAverageWeaTime];
+        }
+      }
+      if (timeNow < outTime) {
+        print(outTime - timeNow);
+        print(outTime - timeNow + outsideTime);
+        startAverageWeaTime = outTime - timeNow;
+        endAverageWeaTime = startAverageWeaTime + outsideTime;
+        //start index = outTime - timeNow
+        //end = index + outDoorTime
+        return [startAverageWeaTime, endAverageWeaTime];
+      }
+    }
+
     getcropdata();
     getWeatherInfoSF();
     getOutTime();
@@ -223,20 +257,24 @@ class _NotificationScreenState extends State<NotificationScreen> {
                         : val_12 > sunFall + 1 || val_12 < sunRise - 1
                             ? 'assets/images/sky/night.png'
                             : 'assets/images/sky/day.png';
+
+            List weaDataTime = weaDataTimeFunc(
+                timeNow.toInt(), snapshot.data[2][0], snapshot.data[2][1]);
+
             List cloudCoverData = json
                 .decode(snapshot.data[0][0]['cloudCover'])
-                .sublist(timeNow.toInt(), snapshot.data[2][1]);
-
+                .sublist(weaDataTime[0], weaDataTime[1]);
+            //timeNow.toInt(), snapshot.data[2][1]
             List tempData = json
                 .decode(snapshot.data[0][0]['temp'])
-                .sublist(timeNow.toInt(), snapshot.data[2][1]);
+                .sublist(weaDataTime[0], weaDataTime[1]);
             int maxTemp =
                 (tempData.reduce((curr, next) => curr + next) / tempData.length)
                     .toInt();
 
             List feelTempData = json
                 .decode(snapshot.data[0][0]['feelTemp'])
-                .sublist(timeNow.toInt(), snapshot.data[2][1]);
+                .sublist(weaDataTime[0], weaDataTime[1]);
             int maxFeelTemp =
                 (feelTempData.reduce((curr, next) => curr + next) /
                         feelTempData.length)
@@ -244,7 +282,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
 
             List precipprobData = json
                 .decode(snapshot.data[0][0]['precipprob'])
-                .sublist(timeNow.toInt(), snapshot.data[2][1]);
+                .sublist(weaDataTime[0], weaDataTime[1]);
             int maxPrecipprob =
                 (precipprobData.reduce((curr, next) => curr + next) /
                         precipprobData.length)
@@ -252,7 +290,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
 
             List windSpeedData = json
                 .decode(snapshot.data[0][0]['windSpeed'])
-                .sublist(timeNow.toInt(), snapshot.data[2][1]);
+                .sublist(weaDataTime[0], weaDataTime[1]);
             int maxWindSpeed =
                 (windSpeedData.reduce((curr, next) => curr + next) /
                         windSpeedData.length)
@@ -260,7 +298,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
 
             List humidityData = json
                 .decode(snapshot.data[0][0]['windSpeed'])
-                .sublist(timeNow.toInt(), snapshot.data[2][1]);
+                .sublist(weaDataTime[0], weaDataTime[1]);
             int maxHumidity =
                 (humidityData.reduce((curr, next) => curr + next) /
                         humidityData.length)
