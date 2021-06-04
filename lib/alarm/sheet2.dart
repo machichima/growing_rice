@@ -52,7 +52,7 @@ class _sheet2State extends State<sheet2> {
                       widget.days.asMap().entries.map((MapEntry map )=> buttontemplate(index:map.key,value:widget.opendays[map.key],day:widget.days[map.key],opendays:widget.opendays)).toList(),
                     ),
                     Padding(
-                      padding: EdgeInsets.fromLTRB(0, height/15, 0, 0),
+                      padding: EdgeInsets.fromLTRB(0, height/25, 0, 0),
                       child: InkWell(
                         child: Image(
                           image: AssetImage('assets/勾勾.png'),

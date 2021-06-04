@@ -113,7 +113,7 @@ class _sheetState extends State<sheet> {
                                   ),
                                 ),
                                 Padding(
-                                  padding: EdgeInsets.fromLTRB(0, height/18, 0, 0),
+                                  padding: EdgeInsets.fromLTRB(0, height/25, 0, 0),
                                   child: InkWell(
                                       child: Image(
                                         image: AssetImage('assets/勾勾.png'),

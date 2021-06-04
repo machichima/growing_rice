@@ -1,5 +1,6 @@
 import 'package:flutter/services.dart';
 import 'package:flutter/material.dart';
+
 import 'package:growingrice_withalarm/alarm/alarm_main.dart';
 import 'main_page.dart';
 import './data/weather_data.dart';
@@ -58,6 +59,7 @@ class MyHome extends StatefulWidget {
 
 class _MyHomeState extends State<MyHome> with TickerProviderStateMixin {
   @override
+
   Widget build(BuildContext context) {
     return Scaffold(body: MainPage());
   }

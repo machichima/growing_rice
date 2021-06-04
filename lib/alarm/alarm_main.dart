@@ -18,6 +18,7 @@ void main() async {
 
 class material extends StatelessWidget {
   @override
+
   Widget build(BuildContext context) {
     return MaterialApp(
       home: MyAlarm(),
@@ -145,7 +146,7 @@ class _MyAlarmState extends State<MyAlarm> {
                 ),
               ),
               Padding(
-                  padding: EdgeInsets.fromLTRB(0, 0, 0, height / 20),
+                  padding: EdgeInsets.fromLTRB(0, 0, 0, height / 18),
                   child: Center(
                       child: sheet(
                     alarmHelper: _alarmHelper,

@@ -150,7 +150,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
 
     Future<List> cropData() async {
       List<Map<String, dynamic>> cropdata =
-          await ConnectCropData.instance.queryAll();
+      await ConnectCropData.instance.queryAll();
       if (cropdata.isNotEmpty) {
         print(cropdata);
         var cropdata_1 = cropdata[0]['nextDate'];
@@ -181,11 +181,45 @@ class _NotificationScreenState extends State<NotificationScreen> {
         ConnectCropData.instance.update({
           ConnectCropData.cropId: 1,
           ConnectCropData.cropType:
-              c[0] == '0000-00-00' ? 1 : (c[1] == 13 ? 1 : c[1] + 1),
+          c[0] == '0000-00-00' ? 1 : (c[1] == 13 ? 1 : c[1] + 1),
           ConnectCropData.nextDate:
-              "${cropChangeDate[0]}-${cropChangeDate[1]}-${cropChangeDate[2]}"
+          "${cropChangeDate[0]}-${cropChangeDate[1]}-${cropChangeDate[2]}"
         });
         cropType = c[1] == 13 ? 1 : c[1] + 1;
+      }
+    }
+
+    List weaDataTimeFunc(int timeNow, int outTime, int backTime) {
+      int startAverageWeaTime = 0, endAverageWeaTime = 0;
+      if (outTime > backTime) {
+        backTime += 24;
+      }
+      int outsideTime = backTime - outTime;
+      if (timeNow > outTime) {
+        int x = timeNow - outTime;
+        if (x > outsideTime) {
+          print(24 - x); //start index
+          startAverageWeaTime = (24 - x);
+          endAverageWeaTime = startAverageWeaTime + outsideTime;
+          return [startAverageWeaTime, endAverageWeaTime];
+        }
+        if (x < outsideTime) {
+          print(backTime - timeNow);
+          startAverageWeaTime = 0;
+          endAverageWeaTime = backTime - timeNow;
+          //start = timeNow
+          //end = backTime - timeNow
+          return [startAverageWeaTime, endAverageWeaTime];
+        }
+      }
+      if (timeNow < outTime) {
+        print(outTime - timeNow);
+        print(outTime - timeNow + outsideTime);
+        startAverageWeaTime = outTime - timeNow;
+        endAverageWeaTime = startAverageWeaTime + outsideTime;
+        //start index = outTime - timeNow
+        //end = index + outDoorTime
+        return [startAverageWeaTime, endAverageWeaTime];
       }
     }
 
@@ -204,71 +238,75 @@ class _NotificationScreenState extends State<NotificationScreen> {
           print(snapshot.data);
           if (snapshot
               .hasData) //if (Provider.of<WeatherData>(context).getWeather) //
-          {
+              {
             print('////////////////////////////////////////////////////////');
             print(snapshot.data);
             int sunRise = // weatherdata != null
-                val >= 24
-                    ? json.decode(snapshot.data[0][0]['sunRise'])[0]
-                    : json.decode(snapshot.data[0][0]['sunRise'])[1]; //6;
+            val >= 24
+                ? json.decode(snapshot.data[0][0]['sunRise'])[0]
+                : json.decode(snapshot.data[0][0]['sunRise'])[1]; //6;
             int sunFall = val >= 24
                 ? json.decode(snapshot.data[0][0]['sunSet'])[0]
                 : json.decode(snapshot.data[0][0]['sunSet'])[1];
             String skyRoute = val_12 == sunRise + 1 || val_12 == sunFall - 1
                 ? 'assets/images/sky/day_sep.png'
                 : val_12 == sunRise || val_12 == sunFall
-                    ? 'assets/images/sky/sun_rise_fall.png'
-                    : val_12 == sunRise - 1 || val_12 == sunFall + 1
-                        ? 'assets/images/sky/night_sep.png'
-                        : val_12 > sunFall + 1 || val_12 < sunRise - 1
-                            ? 'assets/images/sky/night.png'
-                            : 'assets/images/sky/day.png';
+                ? 'assets/images/sky/sun_rise_fall.png'
+                : val_12 == sunRise - 1 || val_12 == sunFall + 1
+                ? 'assets/images/sky/night_sep.png'
+                : val_12 > sunFall + 1 || val_12 < sunRise - 1
+                ? 'assets/images/sky/night.png'
+                : 'assets/images/sky/day.png';
+
+            List weaDataTime = weaDataTimeFunc(
+                timeNow.toInt(), snapshot.data[2][0], snapshot.data[2][1]);
+
             List cloudCoverData = json
                 .decode(snapshot.data[0][0]['cloudCover'])
-                .sublist(timeNow.toInt(), snapshot.data[2][1]);
-
+                .sublist(weaDataTime[0], weaDataTime[1]);
+            //timeNow.toInt(), snapshot.data[2][1]
             List tempData = json
                 .decode(snapshot.data[0][0]['temp'])
-                .sublist(timeNow.toInt(), snapshot.data[2][1]);
+                .sublist(weaDataTime[0], weaDataTime[1]);
             int maxTemp =
-                (tempData.reduce((curr, next) => curr + next) / tempData.length)
-                    .toInt();
+            (tempData.reduce((curr, next) => curr + next) / tempData.length)
+                .toInt();
 
             List feelTempData = json
                 .decode(snapshot.data[0][0]['feelTemp'])
-                .sublist(timeNow.toInt(), snapshot.data[2][1]);
+                .sublist(weaDataTime[0], weaDataTime[1]);
             int maxFeelTemp =
-                (feelTempData.reduce((curr, next) => curr + next) /
-                        feelTempData.length)
-                    .toInt();
+            (feelTempData.reduce((curr, next) => curr + next) /
+                feelTempData.length)
+                .toInt();
 
             List precipprobData = json
                 .decode(snapshot.data[0][0]['precipprob'])
-                .sublist(timeNow.toInt(), snapshot.data[2][1]);
+                .sublist(weaDataTime[0], weaDataTime[1]);
             int maxPrecipprob =
-                (precipprobData.reduce((curr, next) => curr + next) /
-                        precipprobData.length)
-                    .toInt();
+            (precipprobData.reduce((curr, next) => curr + next) /
+                precipprobData.length)
+                .toInt();
 
             List windSpeedData = json
                 .decode(snapshot.data[0][0]['windSpeed'])
-                .sublist(timeNow.toInt(), snapshot.data[2][1]);
+                .sublist(weaDataTime[0], weaDataTime[1]);
             int maxWindSpeed =
-                (windSpeedData.reduce((curr, next) => curr + next) /
-                        windSpeedData.length)
-                    .toInt();
+            (windSpeedData.reduce((curr, next) => curr + next) /
+                windSpeedData.length)
+                .toInt();
 
             List humidityData = json
                 .decode(snapshot.data[0][0]['windSpeed'])
-                .sublist(timeNow.toInt(), snapshot.data[2][1]);
+                .sublist(weaDataTime[0], weaDataTime[1]);
             int maxHumidity =
-                (humidityData.reduce((curr, next) => curr + next) /
-                        humidityData.length)
-                    .toInt();
+            (humidityData.reduce((curr, next) => curr + next) /
+                humidityData.length)
+                .toInt();
 
             for (int i = timeNow.toInt();
-                i < snapshot.data[2][1] - timeNow.toInt();
-                i++) {
+            i < snapshot.data[2][1] - timeNow.toInt();
+            i++) {
               //確認在當下時間到回家時間的期間會不會下雨
               if (precipprobData[i] >= 30) {
                 weather = 2;
@@ -302,13 +340,13 @@ class _NotificationScreenState extends State<NotificationScreen> {
                   ),
                   (weather == 2) //raining
                       ? Container(
-                          child: Image.asset(
-                            'assets/images/cloud/raining.gif',
-                            fit: BoxFit.fill,
-                          ),
-                          width: MediaQuery.of(context).size.width,
-                          height: MediaQuery.of(context).size.height,
-                        )
+                    child: Image.asset(
+                      'assets/images/cloud/raining.gif',
+                      fit: BoxFit.fill,
+                    ),
+                    width: MediaQuery.of(context).size.width,
+                    height: MediaQuery.of(context).size.height,
+                  )
                       : Container(),
                   SunMoon(
                     //sun
@@ -318,8 +356,8 @@ class _NotificationScreenState extends State<NotificationScreen> {
                     route: val_12 <= sunRise + 2
                         ? 'assets/images/sun/sun_morning.png'
                         : val_12 >= sunFall - 2
-                            ? 'assets/images/sun/sun_afternoon.png'
-                            : 'assets/images/sun/sun_noon.png',
+                        ? 'assets/images/sun/sun_afternoon.png'
+                        : 'assets/images/sun/sun_noon.png',
                     isMoon: false,
                   ),
                   SunMoon(
@@ -332,20 +370,20 @@ class _NotificationScreenState extends State<NotificationScreen> {
                     isMoon: true,
                   ),
                   Positioned(
-                      //cloud
+                    //cloud
                       height: h,
                       left: cloudType == 0 ? -cloudVal.toDouble() : null,
                       right: cloudType == 1 ? -cloudVal.toDouble() : null,
                       child: val_12 <= sunFall && val_12 >= sunRise
                           ? weather == 3
-                              ? Image.asset(
-                                  'assets/images/cloud/day_cloudy.png')
-                              : Image.asset('assets/images/cloud/day_cloud.png')
+                          ? Image.asset(
+                          'assets/images/cloud/day_cloudy.png')
+                          : Image.asset('assets/images/cloud/day_cloud.png')
                           : weather == 3
-                              ? Image.asset(
-                                  'assets/images/cloud/night_cloudy.png')
-                              : Image.asset(
-                                  'assets/images/cloud/night_cloud.png')),
+                          ? Image.asset(
+                          'assets/images/cloud/night_cloudy.png')
+                          : Image.asset(
+                          'assets/images/cloud/night_cloud.png')),
                   Positioned(
                     left: 15,
                     top: MediaQuery.of(context).padding.top + 0.01 * h,
@@ -486,13 +524,13 @@ class _NotificationScreenState extends State<NotificationScreen> {
                         val_12 == sunRise + 1 || val_12 == sunFall - 1
                             ? 'assets/images/soil/day_sep_soil.png'
                             : val_12 == sunRise || val_12 == sunFall
-                                ? 'assets/images/soil/sun_rise_fall_soil.png'
-                                : val_12 == sunRise - 1 || val_12 == sunFall + 1
-                                    ? 'assets/images/soil/night_sep_soil.png'
-                                    : val_12 > sunFall + 1 ||
-                                            val_12 < sunRise - 1
-                                        ? 'assets/images/soil/night_soil.png'
-                                        : 'assets/images/soil/day_soil.png',
+                            ? 'assets/images/soil/sun_rise_fall_soil.png'
+                            : val_12 == sunRise - 1 || val_12 == sunFall + 1
+                            ? 'assets/images/soil/night_sep_soil.png'
+                            : val_12 > sunFall + 1 ||
+                            val_12 < sunRise - 1
+                            ? 'assets/images/soil/night_soil.png'
+                            : 'assets/images/soil/day_soil.png',
                         fit: BoxFit.fitWidth,
                       ),
                     ),
@@ -515,7 +553,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
                         child: Text(
                             '${currenttime.hour} : ${currenttime.minute}',
                             style:
-                                TextStyle(color: Colors.white, fontSize: 40)),
+                            TextStyle(color: Colors.white, fontSize: 40)),
                       ),
                     ),
                   ),
@@ -529,10 +567,10 @@ class _NotificationScreenState extends State<NotificationScreen> {
                               buttom1 = false;
                               print('ontap');
                               if (buttom1 |
-                                      buttom2 |
-                                      buttom3 |
-                                      buttom4 |
-                                      buttom5 ==
+                              buttom2 |
+                              buttom3 |
+                              buttom4 |
+                              buttom5 ==
                                   false) {
                                 Navigator.pop(context);
                                 print('pop');
@@ -541,13 +579,13 @@ class _NotificationScreenState extends State<NotificationScreen> {
                           },
                           child: buttom1
                               ? Container(
-                                  height: h / 9,
-                                  width: h / 9,
-                                  child: Image(
-                                    image: AssetImage(
-                                        'assets/images/alarm/snail3.png'),
-                                    fit: BoxFit.fill,
-                                  ))
+                              height: h / 9,
+                              width: h / 9,
+                              child: Image(
+                                image: AssetImage(
+                                    'assets/images/alarm/snail3.png'),
+                                fit: BoxFit.fill,
+                              ))
                               : Container()),
                     ),
                   if (weather == 2)
@@ -561,10 +599,10 @@ class _NotificationScreenState extends State<NotificationScreen> {
                               print('ontap');
                               print(buttom2);
                               if (buttom1 |
-                                      buttom2 |
-                                      buttom3 |
-                                      buttom4 |
-                                      buttom5 ==
+                              buttom2 |
+                              buttom3 |
+                              buttom4 |
+                              buttom5 ==
                                   false) {
                                 Navigator.pop(context);
                                 print('pop');
@@ -573,13 +611,13 @@ class _NotificationScreenState extends State<NotificationScreen> {
                           },
                           child: buttom2
                               ? Container(
-                                  height: h / 12,
-                                  width: h / 12,
-                                  child: Image(
-                                    image: AssetImage(
-                                        'assets/images/alarm/snail3.png'),
-                                    fit: BoxFit.fill,
-                                  ))
+                              height: h / 12,
+                              width: h / 12,
+                              child: Image(
+                                image: AssetImage(
+                                    'assets/images/alarm/snail3.png'),
+                                fit: BoxFit.fill,
+                              ))
                               : Container()),
                     ),
                   if (weather == 2)
@@ -593,10 +631,10 @@ class _NotificationScreenState extends State<NotificationScreen> {
                               print('ontap');
                               print(buttom3);
                               if (buttom1 |
-                                      buttom2 |
-                                      buttom3 |
-                                      buttom4 |
-                                      buttom5 ==
+                              buttom2 |
+                              buttom3 |
+                              buttom4 |
+                              buttom5 ==
                                   false) {
                                 Navigator.pop(context);
                                 print('pop');
@@ -605,13 +643,13 @@ class _NotificationScreenState extends State<NotificationScreen> {
                           },
                           child: buttom3
                               ? Container(
-                                  height: h / 12,
-                                  width: h / 12,
-                                  child: Image(
-                                    image: AssetImage(
-                                        'assets/images/alarm/snail2.png'),
-                                    fit: BoxFit.fill,
-                                  ))
+                              height: h / 12,
+                              width: h / 12,
+                              child: Image(
+                                image: AssetImage(
+                                    'assets/images/alarm/snail2.png'),
+                                fit: BoxFit.fill,
+                              ))
                               : Container()),
                     ),
                   if (weather == 2)
@@ -625,10 +663,10 @@ class _NotificationScreenState extends State<NotificationScreen> {
                               print('ontap');
                               print(buttom2);
                               if (buttom1 |
-                                      buttom2 |
-                                      buttom3 |
-                                      buttom4 |
-                                      buttom5 ==
+                              buttom2 |
+                              buttom3 |
+                              buttom4 |
+                              buttom5 ==
                                   false) {
                                 Navigator.pop(context);
                                 print('pop');
@@ -637,13 +675,13 @@ class _NotificationScreenState extends State<NotificationScreen> {
                           },
                           child: buttom4
                               ? Container(
-                                  height: h / 13,
-                                  width: h / 13,
-                                  child: Image(
-                                    image: AssetImage(
-                                        'assets/images/alarm/snail3.png'),
-                                    fit: BoxFit.fill,
-                                  ))
+                              height: h / 13,
+                              width: h / 13,
+                              child: Image(
+                                image: AssetImage(
+                                    'assets/images/alarm/snail3.png'),
+                                fit: BoxFit.fill,
+                              ))
                               : Container()),
                     ),
                   if (weather == 2)
@@ -657,10 +695,10 @@ class _NotificationScreenState extends State<NotificationScreen> {
                               print('ontap');
                               print(buttom2);
                               if (buttom1 |
-                                      buttom2 |
-                                      buttom3 |
-                                      buttom4 |
-                                      buttom5 ==
+                              buttom2 |
+                              buttom3 |
+                              buttom4 |
+                              buttom5 ==
                                   false) {
                                 Navigator.pop(context);
                                 print('pop');
@@ -669,13 +707,13 @@ class _NotificationScreenState extends State<NotificationScreen> {
                           },
                           child: buttom5
                               ? Container(
-                                  height: h / 15,
-                                  width: h / 15,
-                                  child: Image(
-                                    image: AssetImage(
-                                        'assets/images/alarm/snail2.png'),
-                                    fit: BoxFit.fill,
-                                  ))
+                              height: h / 15,
+                              width: h / 15,
+                              child: Image(
+                                image: AssetImage(
+                                    'assets/images/alarm/snail2.png'),
+                                fit: BoxFit.fill,
+                              ))
                               : Container()),
                     ),
                   if (weather == 1)
@@ -688,10 +726,10 @@ class _NotificationScreenState extends State<NotificationScreen> {
                               buttom1 = false;
                               print('ontap');
                               if (buttom1 |
-                                      buttom2 |
-                                      buttom3 |
-                                      buttom4 |
-                                      buttom5 ==
+                              buttom2 |
+                              buttom3 |
+                              buttom4 |
+                              buttom5 ==
                                   false) {
                                 Navigator.pop(context);
                                 print('pop');
@@ -700,13 +738,13 @@ class _NotificationScreenState extends State<NotificationScreen> {
                           },
                           child: buttom1
                               ? Container(
-                                  height: h / 10,
-                                  width: h / 10,
-                                  child: Image(
-                                    image: AssetImage(
-                                        'assets/images/alarm/麻雀2.png'),
-                                    fit: BoxFit.fill,
-                                  ))
+                              height: h / 10,
+                              width: h / 10,
+                              child: Image(
+                                image: AssetImage(
+                                    'assets/images/alarm/麻雀2.png'),
+                                fit: BoxFit.fill,
+                              ))
                               : Container()),
                     ),
                   if (weather == 1)
@@ -720,10 +758,10 @@ class _NotificationScreenState extends State<NotificationScreen> {
                               print('ontap');
                               print(buttom2);
                               if (buttom1 |
-                                      buttom2 |
-                                      buttom3 |
-                                      buttom4 |
-                                      buttom5 ==
+                              buttom2 |
+                              buttom3 |
+                              buttom4 |
+                              buttom5 ==
                                   false) {
                                 Navigator.pop(context);
                                 print('pop');
@@ -732,13 +770,13 @@ class _NotificationScreenState extends State<NotificationScreen> {
                           },
                           child: buttom2
                               ? Container(
-                                  height: h / 12,
-                                  width: h / 12,
-                                  child: Image(
-                                    image: AssetImage(
-                                        'assets/images/alarm/麻雀1.png'),
-                                    fit: BoxFit.fill,
-                                  ))
+                              height: h / 12,
+                              width: h / 12,
+                              child: Image(
+                                image: AssetImage(
+                                    'assets/images/alarm/麻雀1.png'),
+                                fit: BoxFit.fill,
+                              ))
                               : Container()),
                     ),
                   if (weather == 1)
@@ -752,10 +790,10 @@ class _NotificationScreenState extends State<NotificationScreen> {
                               print('ontap');
                               print(buttom3);
                               if (buttom1 |
-                                      buttom2 |
-                                      buttom3 |
-                                      buttom4 |
-                                      buttom5 ==
+                              buttom2 |
+                              buttom3 |
+                              buttom4 |
+                              buttom5 ==
                                   false) {
                                 Navigator.pop(context);
                                 print('pop');
@@ -764,13 +802,13 @@ class _NotificationScreenState extends State<NotificationScreen> {
                           },
                           child: buttom3
                               ? Container(
-                                  height: h / 12,
-                                  width: h / 12,
-                                  child: Image(
-                                    image: AssetImage(
-                                        'assets/images/alarm/麻雀2.png'),
-                                    fit: BoxFit.fill,
-                                  ))
+                              height: h / 12,
+                              width: h / 12,
+                              child: Image(
+                                image: AssetImage(
+                                    'assets/images/alarm/麻雀2.png'),
+                                fit: BoxFit.fill,
+                              ))
                               : Container()),
                     ),
                   if (weather == 1)
@@ -783,10 +821,10 @@ class _NotificationScreenState extends State<NotificationScreen> {
                               buttom4 = false;
                               print('ontap');
                               if (buttom1 |
-                                      buttom2 |
-                                      buttom3 |
-                                      buttom4 |
-                                      buttom5 ==
+                              buttom2 |
+                              buttom3 |
+                              buttom4 |
+                              buttom5 ==
                                   false) {
                                 Navigator.pop(context);
                                 print('pop');
@@ -795,13 +833,13 @@ class _NotificationScreenState extends State<NotificationScreen> {
                           },
                           child: buttom4
                               ? Container(
-                                  height: h / 11,
-                                  width: h / 11,
-                                  child: Image(
-                                    image: AssetImage(
-                                        'assets/images/alarm/麻雀1.png'),
-                                    fit: BoxFit.fill,
-                                  ))
+                              height: h / 11,
+                              width: h / 11,
+                              child: Image(
+                                image: AssetImage(
+                                    'assets/images/alarm/麻雀1.png'),
+                                fit: BoxFit.fill,
+                              ))
                               : Container()),
                     ),
                   if (weather == 1)
@@ -814,10 +852,10 @@ class _NotificationScreenState extends State<NotificationScreen> {
                               buttom5 = false;
                               print('ontap');
                               if (buttom1 |
-                                      buttom2 |
-                                      buttom3 |
-                                      buttom4 |
-                                      buttom5 ==
+                              buttom2 |
+                              buttom3 |
+                              buttom4 |
+                              buttom5 ==
                                   false) {
                                 Navigator.pop(context);
                                 print('pop');
@@ -826,13 +864,13 @@ class _NotificationScreenState extends State<NotificationScreen> {
                           },
                           child: buttom5
                               ? Container(
-                                  height: h / 10,
-                                  width: h / 10,
-                                  child: Image(
-                                    image: AssetImage(
-                                        'assets/images/alarm/麻雀1.png'),
-                                    fit: BoxFit.fill,
-                                  ))
+                              height: h / 10,
+                              width: h / 10,
+                              child: Image(
+                                image: AssetImage(
+                                    'assets/images/alarm/麻雀1.png'),
+                                fit: BoxFit.fill,
+                              ))
                               : Container()),
                     ),
                   if (weather == 3)
@@ -845,10 +883,10 @@ class _NotificationScreenState extends State<NotificationScreen> {
                               buttom1 = false;
                               print('ontap');
                               if (buttom1 |
-                                      buttom2 |
-                                      buttom3 |
-                                      buttom4 |
-                                      buttom5 ==
+                              buttom2 |
+                              buttom3 |
+                              buttom4 |
+                              buttom5 ==
                                   false) {
                                 Navigator.pop(context);
                                 print('pop');
@@ -857,13 +895,13 @@ class _NotificationScreenState extends State<NotificationScreen> {
                           },
                           child: buttom1
                               ? Container(
-                                  height: h / 9,
-                                  width: h / 9,
-                                  child: Image(
-                                    image: AssetImage(
-                                        'assets/images/alarm/毛毛蟲2.png'),
-                                    fit: BoxFit.fill,
-                                  ))
+                              height: h / 9,
+                              width: h / 9,
+                              child: Image(
+                                image: AssetImage(
+                                    'assets/images/alarm/毛毛蟲2.png'),
+                                fit: BoxFit.fill,
+                              ))
                               : Container()),
                     ),
                   if (weather == 3)
@@ -877,10 +915,10 @@ class _NotificationScreenState extends State<NotificationScreen> {
                               print('ontap');
                               print(buttom2);
                               if (buttom1 |
-                                      buttom2 |
-                                      buttom3 |
-                                      buttom4 |
-                                      buttom5 ==
+                              buttom2 |
+                              buttom3 |
+                              buttom4 |
+                              buttom5 ==
                                   false) {
                                 Navigator.pop(context);
                                 print('pop');
@@ -889,13 +927,13 @@ class _NotificationScreenState extends State<NotificationScreen> {
                           },
                           child: buttom2
                               ? Container(
-                                  height: h / 12,
-                                  width: h / 12,
-                                  child: Image(
-                                    image: AssetImage(
-                                        'assets/images/alarm/毛毛蟲1.png'),
-                                    fit: BoxFit.fill,
-                                  ))
+                              height: h / 12,
+                              width: h / 12,
+                              child: Image(
+                                image: AssetImage(
+                                    'assets/images/alarm/毛毛蟲1.png'),
+                                fit: BoxFit.fill,
+                              ))
                               : Container()),
                     ),
                   if (weather == 3)
@@ -909,10 +947,10 @@ class _NotificationScreenState extends State<NotificationScreen> {
                               print('ontap');
                               print(buttom3);
                               if (buttom1 |
-                                      buttom2 |
-                                      buttom3 |
-                                      buttom4 |
-                                      buttom5 ==
+                              buttom2 |
+                              buttom3 |
+                              buttom4 |
+                              buttom5 ==
                                   false) {
                                 Navigator.pop(context);
                                 print('pop');
@@ -921,13 +959,13 @@ class _NotificationScreenState extends State<NotificationScreen> {
                           },
                           child: buttom3
                               ? Container(
-                                  height: h / 12,
-                                  width: h / 12,
-                                  child: Image(
-                                    image: AssetImage(
-                                        'assets/images/alarm/毛毛蟲2.png'),
-                                    fit: BoxFit.fill,
-                                  ))
+                              height: h / 12,
+                              width: h / 12,
+                              child: Image(
+                                image: AssetImage(
+                                    'assets/images/alarm/毛毛蟲2.png'),
+                                fit: BoxFit.fill,
+                              ))
                               : Container()),
                     ),
                   if (weather == 3)
@@ -940,10 +978,10 @@ class _NotificationScreenState extends State<NotificationScreen> {
                               buttom4 = false;
                               print('ontap');
                               if (buttom1 |
-                                      buttom2 |
-                                      buttom3 |
-                                      buttom4 |
-                                      buttom5 ==
+                              buttom2 |
+                              buttom3 |
+                              buttom4 |
+                              buttom5 ==
                                   false) {
                                 Navigator.pop(context);
                                 print('pop');
@@ -952,13 +990,13 @@ class _NotificationScreenState extends State<NotificationScreen> {
                           },
                           child: buttom4
                               ? Container(
-                                  height: h / 12,
-                                  width: h / 12,
-                                  child: Image(
-                                    image: AssetImage(
-                                        'assets/images/alarm/毛毛蟲1.png'),
-                                    fit: BoxFit.fill,
-                                  ))
+                              height: h / 12,
+                              width: h / 12,
+                              child: Image(
+                                image: AssetImage(
+                                    'assets/images/alarm/毛毛蟲1.png'),
+                                fit: BoxFit.fill,
+                              ))
                               : Container()),
                     ),
                   if (weather == 3)
@@ -971,10 +1009,10 @@ class _NotificationScreenState extends State<NotificationScreen> {
                               buttom5 = false;
                               print('ontap');
                               if (buttom1 |
-                                      buttom2 |
-                                      buttom3 |
-                                      buttom4 |
-                                      buttom5 ==
+                              buttom2 |
+                              buttom3 |
+                              buttom4 |
+                              buttom5 ==
                                   false) {
                                 Navigator.pop(context);
                                 print('pop');
@@ -983,13 +1021,13 @@ class _NotificationScreenState extends State<NotificationScreen> {
                           },
                           child: buttom5
                               ? Container(
-                                  height: h / 10,
-                                  width: h / 10,
-                                  child: Image(
-                                    image: AssetImage(
-                                        'assets/images/alarm/毛毛蟲2.png'),
-                                    fit: BoxFit.fill,
-                                  ))
+                              height: h / 10,
+                              width: h / 10,
+                              child: Image(
+                                image: AssetImage(
+                                    'assets/images/alarm/毛毛蟲2.png'),
+                                fit: BoxFit.fill,
+                              ))
                               : Container()),
                     ),
                 ],
@@ -1066,12 +1104,12 @@ class _RainingDaysState extends State<RainingDays> {
                   },
                   child: buttom1
                       ? Container(
-                          height: height / 9,
-                          width: height / 9,
-                          child: Image(
-                            image: AssetImage('assets/images/alarm/snail3.png'),
-                            fit: BoxFit.fill,
-                          ))
+                      height: height / 9,
+                      width: height / 9,
+                      child: Image(
+                        image: AssetImage('assets/images/alarm/snail3.png'),
+                        fit: BoxFit.fill,
+                      ))
                       : Container()),
             ),
             Positioned(
@@ -1092,12 +1130,12 @@ class _RainingDaysState extends State<RainingDays> {
                   },
                   child: buttom2
                       ? Container(
-                          height: height / 12,
-                          width: height / 12,
-                          child: Image(
-                            image: AssetImage('assets/images/alarm/snail3.png'),
-                            fit: BoxFit.fill,
-                          ))
+                      height: height / 12,
+                      width: height / 12,
+                      child: Image(
+                        image: AssetImage('assets/images/alarm/snail3.png'),
+                        fit: BoxFit.fill,
+                      ))
                       : Container()),
             ),
             Positioned(
@@ -1118,12 +1156,12 @@ class _RainingDaysState extends State<RainingDays> {
                   },
                   child: buttom3
                       ? Container(
-                          height: height / 12,
-                          width: height / 12,
-                          child: Image(
-                            image: AssetImage('assets/images/alarm/snail2.png'),
-                            fit: BoxFit.fill,
-                          ))
+                      height: height / 12,
+                      width: height / 12,
+                      child: Image(
+                        image: AssetImage('assets/images/alarm/snail2.png'),
+                        fit: BoxFit.fill,
+                      ))
                       : Container()),
             ),
             Positioned(
@@ -1144,12 +1182,12 @@ class _RainingDaysState extends State<RainingDays> {
                   },
                   child: buttom4
                       ? Container(
-                          height: height / 13,
-                          width: height / 13,
-                          child: Image(
-                            image: AssetImage('assets/images/alarm/snail3.png'),
-                            fit: BoxFit.fill,
-                          ))
+                      height: height / 13,
+                      width: height / 13,
+                      child: Image(
+                        image: AssetImage('assets/images/alarm/snail3.png'),
+                        fit: BoxFit.fill,
+                      ))
                       : Container()),
             ),
             Positioned(
@@ -1170,12 +1208,12 @@ class _RainingDaysState extends State<RainingDays> {
                   },
                   child: buttom5
                       ? Container(
-                          height: height / 15,
-                          width: height / 15,
-                          child: Image(
-                            image: AssetImage('assets/images/alarm/snail2.png'),
-                            fit: BoxFit.fill,
-                          ))
+                      height: height / 15,
+                      width: height / 15,
+                      child: Image(
+                        image: AssetImage('assets/images/alarm/snail2.png'),
+                        fit: BoxFit.fill,
+                      ))
                       : Container()),
             ),
           ],
@@ -1241,12 +1279,12 @@ class _SunnyDayState extends State<SunnyDay> {
                   },
                   child: buttom1
                       ? Container(
-                          height: height / 10,
-                          width: height / 10,
-                          child: Image(
-                            image: AssetImage('assets/images/alarm/麻雀2.png'),
-                            fit: BoxFit.fill,
-                          ))
+                      height: height / 10,
+                      width: height / 10,
+                      child: Image(
+                        image: AssetImage('assets/images/alarm/麻雀2.png'),
+                        fit: BoxFit.fill,
+                      ))
                       : Container()),
             ),
             Positioned(
@@ -1267,12 +1305,12 @@ class _SunnyDayState extends State<SunnyDay> {
                   },
                   child: buttom2
                       ? Container(
-                          height: height / 12,
-                          width: height / 12,
-                          child: Image(
-                            image: AssetImage('assets/images/alarm/麻雀1.png'),
-                            fit: BoxFit.fill,
-                          ))
+                      height: height / 12,
+                      width: height / 12,
+                      child: Image(
+                        image: AssetImage('assets/images/alarm/麻雀1.png'),
+                        fit: BoxFit.fill,
+                      ))
                       : Container()),
             ),
             Positioned(
@@ -1293,12 +1331,12 @@ class _SunnyDayState extends State<SunnyDay> {
                   },
                   child: buttom3
                       ? Container(
-                          height: height / 12,
-                          width: height / 12,
-                          child: Image(
-                            image: AssetImage('assets/images/alarm/麻雀2.png'),
-                            fit: BoxFit.fill,
-                          ))
+                      height: height / 12,
+                      width: height / 12,
+                      child: Image(
+                        image: AssetImage('assets/images/alarm/麻雀2.png'),
+                        fit: BoxFit.fill,
+                      ))
                       : Container()),
             ),
             Positioned(
@@ -1318,12 +1356,12 @@ class _SunnyDayState extends State<SunnyDay> {
                   },
                   child: buttom4
                       ? Container(
-                          height: height / 11,
-                          width: height / 11,
-                          child: Image(
-                            image: AssetImage('assets/images/alarm/麻雀1.png'),
-                            fit: BoxFit.fill,
-                          ))
+                      height: height / 11,
+                      width: height / 11,
+                      child: Image(
+                        image: AssetImage('assets/images/alarm/麻雀1.png'),
+                        fit: BoxFit.fill,
+                      ))
                       : Container()),
             ),
             Positioned(
@@ -1343,12 +1381,12 @@ class _SunnyDayState extends State<SunnyDay> {
                   },
                   child: buttom5
                       ? Container(
-                          height: height / 10,
-                          width: height / 10,
-                          child: Image(
-                            image: AssetImage('assets/images/alarm/麻雀1.png'),
-                            fit: BoxFit.fill,
-                          ))
+                      height: height / 10,
+                      width: height / 10,
+                      child: Image(
+                        image: AssetImage('assets/images/alarm/麻雀1.png'),
+                        fit: BoxFit.fill,
+                      ))
                       : Container()),
             ),
           ],
@@ -1412,12 +1450,12 @@ class _WindsDayState extends State<WindsDay> {
                   },
                   child: buttom1
                       ? Container(
-                          height: height / 9,
-                          width: height / 9,
-                          child: Image(
-                            image: AssetImage('assets/images/alarm/毛毛蟲2.png'),
-                            fit: BoxFit.fill,
-                          ))
+                      height: height / 9,
+                      width: height / 9,
+                      child: Image(
+                        image: AssetImage('assets/images/alarm/毛毛蟲2.png'),
+                        fit: BoxFit.fill,
+                      ))
                       : Container()),
             ),
             Positioned(
@@ -1438,12 +1476,12 @@ class _WindsDayState extends State<WindsDay> {
                   },
                   child: buttom2
                       ? Container(
-                          height: height / 12,
-                          width: height / 12,
-                          child: Image(
-                            image: AssetImage('assets/images/alarm/毛毛蟲1.png'),
-                            fit: BoxFit.fill,
-                          ))
+                      height: height / 12,
+                      width: height / 12,
+                      child: Image(
+                        image: AssetImage('assets/images/alarm/毛毛蟲1.png'),
+                        fit: BoxFit.fill,
+                      ))
                       : Container()),
             ),
             Positioned(
@@ -1464,12 +1502,12 @@ class _WindsDayState extends State<WindsDay> {
                   },
                   child: buttom3
                       ? Container(
-                          height: height / 12,
-                          width: height / 12,
-                          child: Image(
-                            image: AssetImage('assets/images/alarm/毛毛蟲2.png'),
-                            fit: BoxFit.fill,
-                          ))
+                      height: height / 12,
+                      width: height / 12,
+                      child: Image(
+                        image: AssetImage('assets/images/alarm/毛毛蟲2.png'),
+                        fit: BoxFit.fill,
+                      ))
                       : Container()),
             ),
             Positioned(
@@ -1489,12 +1527,12 @@ class _WindsDayState extends State<WindsDay> {
                   },
                   child: buttom4
                       ? Container(
-                          height: height / 12,
-                          width: height / 12,
-                          child: Image(
-                            image: AssetImage('assets/images/alarm/毛毛蟲1.png'),
-                            fit: BoxFit.fill,
-                          ))
+                      height: height / 12,
+                      width: height / 12,
+                      child: Image(
+                        image: AssetImage('assets/images/alarm/毛毛蟲1.png'),
+                        fit: BoxFit.fill,
+                      ))
                       : Container()),
             ),
             Positioned(
@@ -1514,12 +1552,12 @@ class _WindsDayState extends State<WindsDay> {
                   },
                   child: buttom5
                       ? Container(
-                          height: height / 10,
-                          width: height / 10,
-                          child: Image(
-                            image: AssetImage('assets/images/alarm/毛毛蟲2.png'),
-                            fit: BoxFit.fill,
-                          ))
+                      height: height / 10,
+                      width: height / 10,
+                      child: Image(
+                        image: AssetImage('assets/images/alarm/毛毛蟲2.png'),
+                        fit: BoxFit.fill,
+                      ))
                       : Container()),
             ),
           ],
